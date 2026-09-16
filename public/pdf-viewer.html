@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Viewer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1e293b;
+      color: #e2e8f0;
+      overflow: hidden;
+    }
+    
+    #toolbar {
+      background: #0f172a;
+      padding: 12px 16px;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    #toolbar button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    
+    #toolbar button:hover {
+      background: #2563eb;
+    }
+    
+    #toolbar button:disabled {
+      background: #475569;
+      cursor: not-allowed;
+    }
+    
+    #pageInfo {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+    
+    #zoom {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+    
+    #container {
+      width: 100%;
+      height: calc(100vh - 57px);
+      overflow: auto;
+      background: #0f172a;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    #pagesContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 100%;
+    }
+    
+    .page {
+      background: white;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+      margin: 0 auto;
+    }
+    
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    
+    .spinner {
+      border: 4px solid #334155;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    #error {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      max-width: 500px;
+      padding: 32px;
+      background: #1e293b;
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
+    
+    #error h2 {
+      color: #ef4444;
+      margin-bottom: 16px;
+      font-size: 24px;
+    }
+    
+    #error p {
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button id="prevPage">← Previous</button>
+    <button id="nextPage">Next →</button>
+    <span id="pageInfo">Page <span id="currentPage">-</span> of <span id="totalPages">-</span></span>
+    <button id="zoomOut">-</button>
+    <span id="zoom">100%</span>
+    <button id="zoomIn">+</button>
+    <button id="fitWidth">Fit Width</button>
+  </div>
+  
+  <div id="container">
+    <div id="pagesContainer"></div>
+  </div>
+  
+  <div id="loading" style="display: none;">
+    <div class="spinner"></div>
+    <div>Loading PDF...</div>
+    <div id="progress" style="margin-top: 8px; color: #64748b; font-size: 12px;"></div>
+  </div>
+  
+  <div id="error" style="display: none;">
+    <h2>⚠️ Failed to Load PDF</h2>
+    <p id="errorMessage"></p>
+  </div>
+
+  <script src="/pdfjs/build/pdf.mjs" type="module"></script>
+  <script type="module">
+    import * as pdfjsLib from '/pdfjs/build/pdf.mjs';
+    
+    // Configure worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/build/pdf.worker.mjs';
+    
+    // Get PDF URL from query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const pdfUrl = urlParams.get('file');
+    
+    if (!pdfUrl) {
+      showError('No PDF file specified');
+      throw new Error('No PDF URL provided');
+    }
+    
+    console.log('Loading PDF:', pdfUrl);
+    
+    // State
+    let pdfDoc = null;
+    let scale = 1.5;
+    let currentPage = 1;
+    
+    // UI elements
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('error');
+    const errorMessage = document.getElementById('errorMessage');
+    const progress = document.getElementById('progress');
+    const container = document.getElementById('pagesContainer');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const zoomInBtn = document.getElementById('zoomIn');
+    const zoomOutBtn = document.getElementById('zoomOut');
+    const fitWidthBtn = document.getElementById('fitWidth');
+    const currentPageSpan = document.getElementById('currentPage');
+    const totalPagesSpan = document.getElementById('totalPages');
+    const zoomSpan = document.getElementById('zoom');
+    
+    function showLoading() {
+      loading.style.display = 'block';
+      error.style.display = 'none';
+    }
+    
+    function hideLoading() {
+      loading.style.display = 'none';
+    }
+    
+    function showError(message) {
+      error.style.display = 'block';
+      errorMessage.textContent = message;
+      loading.style.display = 'none';
+    }
+    
+    async function loadPDF() {
+      showLoading();
+      
+      try {
+        const loadingTask = pdfjsLib.getDocument({
+          url: pdfUrl,
+          cMapUrl: '/pdfjs/cmaps/',
+          cMapPacked: true,
+          standardFontDataUrl: '/pdfjs/standard_fonts/',
+        });
+        
+        loadingTask.onProgress = (progressData) => {
+          if (progressData.total > 0) {
+            const percent = Math.round((progressData.loaded / progressData.total) * 100);
+            progress.textContent = `${percent}%`;
+          }
+        };
+        
+        pdfDoc = await loadingTask.promise;
+        console.log('PDF loaded:', pdfDoc.numPages, 'pages');
+        
+        totalPagesSpan.textContent = pdfDoc.numPages;
+        currentPageSpan.textContent = '1';
+        
+        hideLoading();
+        await renderAllPages();
+        
+      } catch (err) {
+        console.error('Error loading PDF:', err);
+        showError(err.message || 'Failed to load PDF');
+      }
+    }
+    
+    async function renderAllPages() {
+      container.innerHTML = '';
+      
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        await renderPage(pageNum);
+      }
+    }
+    
+    async function renderPage(pageNum) {
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale });
+      
+      const canvas = document.createElement('canvas');
+      canvas.className = 'page';
+      const context = canvas.getContext('2d');
+      
+      const outputScale = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(viewport.width * outputScale);
+      canvas.height = Math.floor(viewport.height * outputScale);
+      canvas.style.width = Math.floor(viewport.width) + 'px';
+      canvas.style.height = Math.floor(viewport.height) + 'px';
+      
+      container.appendChild(canvas);
+      
+      if (outputScale !== 1) {
+        context.scale(outputScale, outputScale);
+      }
+      
+      await page.render({
+        canvasContext: context,
+        viewport: viewport
+      }).promise;
+      
+      console.log('Rendered page', pageNum);
+    }
+    
+    // Event handlers
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        currentPageSpan.textContent = currentPage;
+        scrollToPage(currentPage);
+      }
+    });
+    
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < pdfDoc.numPages) {
+        currentPage++;
+        currentPageSpan.textContent = currentPage;
+        scrollToPage(currentPage);
+      }
+    });
+    
+    zoomInBtn.addEventListener('click', async () => {
+      scale = Math.min(3, scale + 0.25);
+      zoomSpan.textContent = Math.round(scale * 100) + '%';
+      await renderAllPages();
+    });
+    
+    zoomOutBtn.addEventListener('click', async () => {
+      scale = Math.max(0.5, scale - 0.25);
+      zoomSpan.textContent = Math.round(scale * 100) + '%';
+      await renderAllPages();
+    });
+    
+    fitWidthBtn.addEventListener('click', async () => {
+      const containerWidth = document.getElementById('container').clientWidth - 40;
+      const page = await pdfDoc.getPage(1);
+      const viewport = page.getViewport({ scale: 1 });
+      scale = containerWidth / viewport.width;
+      zoomSpan.textContent = Math.round(scale * 100) + '%';
+      await renderAllPages();
+    });
+    
+    function scrollToPage(pageNum) {
+      const pages = container.getElementsByClassName('page');
+      if (pages[pageNum - 1]) {
+        pages[pageNum - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+    
+    // Start loading
+    loadPDF();
+  </script>
+</body>
+</html>
