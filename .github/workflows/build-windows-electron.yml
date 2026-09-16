@@ -19,17 +19,6 @@ on:
       - main
     tags:
       - 'v*.*.*'
-    paths:
-      - 'electron/**'
-      - 'app/**'
-      - 'components/**'
-      - 'lib/**'
-      - 'public/**'
-      - 'prisma/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'electron-builder.yml'
-      - '.github/workflows/build-windows-electron.yml'
 
   # Allow manual trigger from GitHub UI
   workflow_dispatch:
