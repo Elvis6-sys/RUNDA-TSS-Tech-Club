@@ -1,0 +1,50 @@
+NUMBER SYSTEMS
+==============
+
+Computers only understand two states: ON and OFF.
+We represent these as 1 and 0 — this is called the BINARY system.
+
+DECIMAL (Base 10)
+-----------------
+The system you use every day.
+Digits: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+
+Example: 245 means
+  2 × 100  =  200
+  4 × 10   =   40
+  5 × 1    =    5
+  Total    =  245
+
+BINARY (Base 2)
+---------------
+Only two digits: 0 and 1
+Each position is a power of 2.
+
+Example: 1011 in binary means
+  1 × 8  =  8
+  0 × 4  =  0
+  1 × 2  =  2
+  1 × 1  =  1
+  Total  = 11 in decimal
+
+CONVERTING DECIMAL TO BINARY
+-----------------------------
+Divide by 2 repeatedly, write remainders bottom to top.
+
+Example: Convert 13 to binary
+  13 ÷ 2 = 6 remainder 1
+   6 ÷ 2 = 3 remainder 0
+   3 ÷ 2 = 1 remainder 1
+   1 ÷ 2 = 0 remainder 1
+
+  Read remainders bottom to top: 1101
+  So 13 in decimal = 1101 in binary ✓
+
+PRACTICE
+--------
+Convert these to binary:
+  1. 5
+  2. 10
+  3. 20
+
+Answers: 101 | 1010 | 10100

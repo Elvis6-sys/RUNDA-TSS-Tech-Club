@@ -1,0 +1,115 @@
+OPERATING SYSTEM BASICS
+=======================
+
+The Operating System (OS) is the software that manages all hardware
+and lets you run programs. Without it, your computer is just metal.
+
+WHAT THE OS DOES
+----------------
+  1. Process management  — runs and schedules programs
+  2. Memory management   — allocates RAM to programs
+  3. File system         — organises files on storage
+  4. Device management   — talks to keyboard, screen, network
+  5. Security            — controls who can access what
+
+COMMON OPERATING SYSTEMS
+-------------------------
+  Windows   — most common on desktops/laptops
+  macOS     — Apple computers
+  Linux     — servers, developers, Android (based on Linux kernel)
+  Android   — mobile (Linux-based)
+  iOS       — iPhone (Unix-based)
+
+Most web servers run Linux. Learning Linux = learning the internet.
+
+PROCESSES
+---------
+A process is a running program.
+When you open Chrome, the OS creates a process for it.
+
+  Process has:
+    - Its own memory space (other processes can't touch it)
+    - A Process ID (PID) — a unique number
+    - State: running, waiting, or sleeping
+
+  In Linux, see all processes:
+    ps aux
+    top
+    htop
+
+THREADS
+-------
+A thread is a unit of work inside a process.
+One process can have many threads running simultaneously.
+
+  Example: Chrome
+    - Thread 1: renders the webpage
+    - Thread 2: handles your typing
+    - Thread 3: downloads images
+    - Thread 4: plays audio
+
+FILE SYSTEM
+-----------
+The file system organises data into files and directories (folders).
+
+Linux/macOS file system (hierarchical):
+  /                    ← root (top of everything)
+  ├── home/
+  │   └── alice/       ← your home directory (~)
+  │       ├── Documents/
+  │       └── projects/
+  ├── etc/             ← system configuration files
+  ├── var/             ← logs and variable data
+  └── usr/             ← installed programs
+
+Windows uses drive letters: C:\Users\Alice\Documents\
+
+FILE PERMISSIONS (Linux)
+------------------------
+Every file has 3 permission sets:
+  Owner | Group | Others
+
+Each set has 3 bits: read (r), write (w), execute (x)
+
+  -rwxr-xr--
+   │││ │││ │││
+   │││ │││ └── others: read only
+   │││ └──── group: read + execute
+   └──────── owner: read + write + execute
+
+  chmod 755 script.py   # owner: rwx, group: r-x, others: r-x
+  chmod 644 data.txt    # owner: rw-, group: r--, others: r--
+
+MEMORY MANAGEMENT
+-----------------
+The OS decides which program gets which RAM.
+
+  Virtual memory — each process thinks it has the whole RAM to itself.
+                   The OS maps virtual addresses to real physical addresses.
+
+  Swap space     — when RAM is full, the OS moves inactive data to disk.
+                   This is why your computer slows down when RAM is full.
+
+KERNEL vs USER SPACE
+--------------------
+  Kernel space — the core OS code. Direct hardware access. Trusted.
+  User space   — your programs. No direct hardware access. Sandboxed.
+
+  When your Python script reads a file, it asks the kernel to do it
+  via a SYSTEM CALL. The kernel checks permissions, then does the work.
+
+PRACTICE
+--------
+  1. Find out which OS and version you are running
+     Windows: Settings → System → About
+     Linux:   cat /etc/os-release
+     macOS:   Apple menu → About This Mac
+
+  2. Find your computer's hostname:
+     Windows: hostname
+     Linux/macOS: hostname
+
+  3. List all running processes and find the one using the most memory
+
+  4. Create a folder called test-os, create a file inside it,
+     then delete both — using only the command line (next lesson)

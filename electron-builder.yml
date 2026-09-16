@@ -1,0 +1,240 @@
+appId: com.runda.tss.exam
+productName: RUNDA TSS Exam System
+copyright: Copyright © 2025 RUNDA TSS Tech Club
+asar: true
+
+# PERFORMANCE: Skip slow dependency analysis and blockmap generation
+npmRebuild: false
+buildDependenciesFromSource: false
+# Disable blockmap — only needed for auto-updates, publish is null
+generateUpdatesFilesForAllChannels: false
+
+directories:
+  output: dist-electron
+  buildResources: build
+
+files:
+  # Next.js standalone output (contains the full server + all traced deps)
+  - ".next/standalone/**/*"
+  - ".next/static/**/*"
+  - "public/**/*"
+  # Prisma schema and database
+  - "prisma/schema.prisma"
+  - "prisma/dev.db"
+  # App content
+  - "All Curriculums/**/*"
+  # Electron main process files
+  - "electron/**/*"
+  - "package.json"
+  # ---- Electron main process node_modules (explicit from/to — no glob filter) ----
+  # electron-store and full dep tree
+  - from: "node_modules/electron-store"
+    to: "node_modules/electron-store"
+  - from: "node_modules/conf"
+    to: "node_modules/conf"
+  # conf's NESTED ajv@8 — placed at conf/node_modules/ajv so Node resolves it
+  # before the flat ajv@6 (flat ajv has no dist/2020.js, conf needs Ajv2020)
+  - from: "node_modules/conf/node_modules/ajv"
+    to: "node_modules/conf/node_modules/ajv"
+  - from: "node_modules/conf/node_modules/ajv-formats"
+    to: "node_modules/conf/node_modules/ajv-formats"
+  - from: "node_modules/conf/node_modules/json-schema-traverse"
+    to: "node_modules/conf/node_modules/json-schema-traverse"
+  - from: "node_modules/env-paths"
+    to: "node_modules/env-paths"
+  - from: "node_modules/json-schema-typed"
+    to: "node_modules/json-schema-typed"
+  - from: "node_modules/atomically"
+    to: "node_modules/atomically"
+  - from: "node_modules/stubborn-fs"
+    to: "node_modules/stubborn-fs"
+  - from: "node_modules/stubborn-utils"
+    to: "node_modules/stubborn-utils"
+  - from: "node_modules/when-exit"
+    to: "node_modules/when-exit"
+  - from: "node_modules/debounce-fn"
+    to: "node_modules/debounce-fn"
+  - from: "node_modules/mimic-function"
+    to: "node_modules/mimic-function"
+  - from: "node_modules/dot-prop"
+    to: "node_modules/dot-prop"
+  - from: "node_modules/type-fest"
+    to: "node_modules/type-fest"
+  - from: "node_modules/semver"
+    to: "node_modules/semver"
+  - from: "node_modules/uint8array-extras"
+    to: "node_modules/uint8array-extras"
+  - from: "node_modules/fast-deep-equal"
+    to: "node_modules/fast-deep-equal"
+  - from: "node_modules/fast-uri"
+    to: "node_modules/fast-uri"
+  - from: "node_modules/json-schema-traverse"
+    to: "node_modules/json-schema-traverse"
+  - from: "node_modules/require-from-string"
+    to: "node_modules/require-from-string"
+  - from: "node_modules/uuid"
+    to: "node_modules/uuid"
+  # Prisma native engine for Windows (required for SQLite queries)
+  - from: "node_modules/.prisma/client"
+    to: "node_modules/.prisma/client"
+  - from: "node_modules/@prisma/client"
+    to: "node_modules/@prisma/client"
+  - from: "node_modules/@prisma/engines"
+    to: "node_modules/@prisma/engines"
+  # ---- Exclusions (must NOT appear before the from/to entries above) ----
+  - "!**/*.ts"
+  - "!**/*.map"
+  - "!.git/**/*"
+  - "!.github/**/*"
+  - "!.vscode/**/*"
+  - "!.idea/**/*"
+  - "!.venv/**/*"
+  - "!venv/**/*"
+  - "!**/__pycache__/**/*"
+  - "!**/*.pyc"
+  - "!**/*.pyo"
+  - "!runda-secure-exam/**/*"
+  - "!.qodo/**/*"
+  - "!prisma/migrations/**/*"
+  - "!scripts/**/*"
+  - "!dist-electron/**/*"
+  - "!public/uploads/**/*"
+  - "!user-data/**/*"
+  - "!tmp/**/*"
+  - "!**/*.mp4"
+  - "!**/*.webm"
+  - "!**/*.avi"
+  - "!**/*.mov"
+  - "!**/*.mkv"
+
+# asarUnpack: native .node files and large assets must live outside the asar archive
+asarUnpack:
+  - ".next/standalone/**/*"
+  - ".next/static/**/*"
+  - "prisma/**/*"
+  - "All Curriculums/**/*"
+  - "electron/**/*"
+  - "node_modules/electron-store/**/*"
+  - "node_modules/conf/**/*"
+  - "node_modules/uuid/**/*"
+  - "node_modules/.prisma/client/**/*"
+  - "node_modules/@prisma/client/**/*"
+  - "node_modules/@prisma/engines/**/*"
+
+extraResources:
+  - from: ".env"
+    to: ".env"
+  - from: "prisma/dev.db"
+    to: "prisma/dev.db"
+  # Also place dev.db where startup-validator expects it
+  - from: "prisma/dev.db"
+    to: "app.asar.unpacked/prisma/dev.db"
+
+win:
+  target:
+    - nsis
+  icon: build/icon.ico
+  artifactName: "${productName}-${version}-Setup.exe"
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: "${productName}"
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  deleteAppDataOnUninstall: false
+  perMachine: false
+  displayLanguageSelector: true
+  packElevateHelper: false
+
+# Disable all code signing and online checks
+electronUpdaterCompatibility: ">=2.16"
+forceCodeSigning: false
+nodeGypRebuild: false
+
+linux:
+  target:
+    - target: deb
+      arch:
+        - x64
+    - target: AppImage
+      arch:
+        - x64
+    - target: rpm
+      arch:
+        - x64
+  icon: build/icon.png
+  category: Education
+  synopsis: Secure Exam System for TVET Schools
+  description: RUNDA TSS Exam System - A secure exam platform for TVET schools with offline support and anti-cheat features.
+  vendor: RUNDA TSS Tech Club
+  maintainer: RUNDA TSS <support@runda-tss.rw>
+  artifactName: "${productName}-${version}-${os}-${arch}.${ext}"
+
+deb:
+  depends:
+    - libnotify4
+    - libxtst6
+    - libnss3
+    - libxss1
+    - libgbm1
+    - libgtk-3-0
+    - libdrm2
+    - libgbm1
+    - libasound2
+  priority: optional
+  compression: gz
+  afterInstall: build/linux-after-install.sh
+  afterRemove: build/linux-after-remove.sh
+
+rpm:
+  depends:
+    - libnotify
+    - libXScrnSaver
+    - libXtst
+    - nss
+    - libgbm
+  fpm:
+    - "--rpm-tag"
+    - "Requires: libnotify libXScrnSaver libXtst nss libgbm"
+
+appImage:
+  category: Education
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
+  icon: build/icon.icns
+  category: public.app-category.education
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  artifactName: "${productName}-${version}-${os}-${arch}.${ext}"
+
+dmg:
+  title: "${productName} ${version}"
+  icon: build/icon.icns
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+  window:
+    width: 540
+    height: 380
+
+publish: null

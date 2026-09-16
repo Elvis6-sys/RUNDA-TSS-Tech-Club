@@ -1,0 +1,633 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+  binaryTargets = ["native", "windows", "debian-openssl-3.0.x", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model UserProfile {
+  id                    String                  @id
+  email                 String                  @unique
+  password              String
+  name                  String?
+  school                String?
+  cohort                String?
+  level                 String?
+  department            String?
+  graduationYear        Int?
+  role                  String                  @default("pending")
+  status                String                  @default("pending_review")
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  phone                 String?                 @unique
+  xp                    Int                     @default(0)
+  profileImage          String?
+  application           Application?
+  hostedSessions        AudioSession[]
+  blockProgress         BlockProgress[]
+  trainerChallenges     Challenge[]             @relation("TrainerChallenges")
+  challengeSubmissions  ChallengeSubmission[]
+  cheatFlags            CheatNotification[]     @relation("CheatStudent")
+  contentActivities     ContentActivity[]
+  reviewedEntranceTests EntranceTest[]          @relation("EntranceTestReviewer")
+  entranceTest          EntranceTest?
+  eventComments         EventComment[]
+  eventReactions        EventReaction[]
+  trainerLessons        Lesson[]                @relation("TrainerLessons")
+  lessonProgress        LessonProgress[]
+  sentMessages          Message[]
+  messageReactions      MessageReaction[]
+  projectMembers        ProjectMember[]
+  projectSubmissions    ProjectSubmission[]
+  quizSubmissions       QuizBlockSubmission[]
+  quizNotifications     QuizGradeNotification[]
+  quizResponses         QuizResponse[]
+  gradedQuizzes         QuizResponse[]          @relation("GradedBy")
+  trainerResources      Resource[]              @relation("TrainerResources")
+  skillProgress         SkillProgress[]
+  trainerTracks         SkillTrack[]            @relation("TrainerTracks")
+  streak                StudentStreak?
+  trainedModules        TrainerModule[]
+  xapiStatements        XAPIStatement[]
+  xpEvents              XpEvent[]
+}
+
+model Application {
+  id            String      @id @default(cuid())
+  userId        String      @unique
+  rubric        String
+  statement     String
+  department    String?
+  taskLink      String?
+  portfolioLink String?
+  reviewedBy    String?
+  reviewNotes   String?
+  status        String      @default("pending_review")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          UserProfile @relation(fields: [userId], references: [id])
+}
+
+model Project {
+  id             String          @id @default(cuid())
+  title          String
+  description    String?
+  tierVisibility String          @default("all")
+  createdBy      String
+  status         String          @default("active")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  members        ProjectMember[]
+}
+
+model ProjectMember {
+  projectId     String
+  userId        String
+  roleInProject String      @default("member")
+  approvedAt    DateTime?
+  approvedBy    String?
+  requestedAt   DateTime    @default(now())
+  status        String      @default("pending")
+  user          UserProfile @relation(fields: [userId], references: [id])
+  project       Project     @relation(fields: [projectId], references: [id])
+
+  @@id([projectId, userId])
+}
+
+model ProjectSubmission {
+  id            String      @id @default(cuid())
+  projectId     String
+  userId        String
+  submissionUrl String
+  fileUrl       String?
+  fileName      String?
+  fileType      String?
+  note          String?
+  submittedAt   DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  feedback      String?
+  grade         Int?
+  gradedAt      DateTime?
+  gradedBy      String?
+  status        String      @default("submitted")
+  user          UserProfile @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+}
+
+model Resource {
+  id             String       @id @default(cuid())
+  title          String
+  url            String?
+  fileUrl        String?
+  fileType       String?
+  content        String?
+  tierVisibility String       @default("all")
+  createdAt      DateTime     @default(now())
+  subject        String?
+  trainerId      String?
+  trainer        UserProfile? @relation("TrainerResources", fields: [trainerId], references: [id])
+}
+
+model Event {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  type        String         @default("other")
+  createdAt   DateTime       @default(now())
+  comments    EventComment[]
+}
+
+model EventComment {
+  id        String          @id @default(cuid())
+  eventId   String
+  userId    String
+  content   String
+  createdAt DateTime        @default(now())
+  user      UserProfile     @relation(fields: [userId], references: [id])
+  event     Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  reactions EventReaction[]
+}
+
+model EventReaction {
+  id        String       @id @default(cuid())
+  commentId String
+  userId    String
+  emoji     String
+  user      UserProfile  @relation(fields: [userId], references: [id])
+  comment   EventComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, emoji])
+}
+
+model ChatRoom {
+  id             String    @id @default(cuid())
+  name           String
+  type           String    @default("general")
+  tierVisibility String?
+  createdAt      DateTime  @default(now())
+  messages       Message[]
+}
+
+model Message {
+  id        String            @id @default(cuid())
+  roomId    String
+  senderId  String
+  content   String
+  fileUrl   String?
+  fileType  String?
+  fileName  String?
+  replyToId String?
+  createdAt DateTime          @default(now())
+  sender    UserProfile       @relation(fields: [senderId], references: [id])
+  room      ChatRoom          @relation(fields: [roomId], references: [id])
+  replyTo   Message?          @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies   Message[]         @relation("MessageReplies")
+  reactions MessageReaction[]
+}
+
+model MessageReaction {
+  id        String      @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  user      UserProfile @relation(fields: [userId], references: [id])
+  message   Message     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+}
+
+model AudioSession {
+  id           String      @id @default(cuid())
+  roomName     String      @unique
+  hostId       String
+  status       String      @default("live")
+  createdAt    DateTime    @default(now())
+  allowedRoles String      @default("all")
+  title        String
+  host         UserProfile @relation(fields: [hostId], references: [id])
+}
+
+model Lesson {
+  id             String           @id @default(cuid())
+  title          String
+  subject        String
+  tierVisibility String           @default("all")
+  content        String
+  order          Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  trainerId      String?
+  trainer        UserProfile?     @relation("TrainerLessons", fields: [trainerId], references: [id])
+  lessonProgress LessonProgress[]
+}
+
+model LessonProgress {
+  id          String      @id @default(cuid())
+  studentId   String
+  lessonId    String
+  startedAt   DateTime    @default(now())
+  completedAt DateTime?
+  lastReadAt  DateTime    @default(now())
+  synced      Boolean     @default(true)
+  student     UserProfile @relation(fields: [studentId], references: [id])
+  lesson      Lesson      @relation(fields: [lessonId], references: [id])
+
+  @@unique([studentId, lessonId])
+}
+
+model StudentStreak {
+  id               String      @id @default(cuid())
+  studentId        String      @unique
+  currentStreak    Int         @default(0)
+  longestStreak    Int         @default(0)
+  lastActivityDate DateTime?
+  student          UserProfile @relation(fields: [studentId], references: [id])
+}
+
+model SkillTrack {
+  id               String                @id @default(cuid())
+  name             String
+  description      String?
+  department       String?
+  tier             String                @default("all")
+  icon             String?
+  order            Int                   @default(0)
+  createdAt        DateTime              @default(now())
+  trainerId        String?
+  curriculumType   String?
+  curriculumUrl    String?
+  moduleSlug       String?
+  tableOfContents  String?               @default("[]")
+  customTocEntries CustomTocEntry[]
+  quizSubmissions  QuizBlockSubmission[] @relation("QuizBlockSubmission")
+  nodes            SkillNode[]
+  trainer          UserProfile?          @relation("TrainerTracks", fields: [trainerId], references: [id])
+  trainerModules   TrainerModule[]
+}
+
+model SkillNode {
+  id               String                @id @default(cuid())
+  trackId          String
+  title            String
+  description      String?
+  xpReward         Int                   @default(10)
+  order            Int                   @default(0)
+  prerequisiteId   String?
+  createdAt        DateTime              @default(now())
+  blocks           String?               @default("[]")
+  estimatedMinutes Int                   @default(10)
+  videoUrl         String?
+  blockProgress    BlockProgress[]
+  quizSubmissions  QuizBlockSubmission[] @relation("QuizBlockSubmission")
+  quizResponses    QuizResponse[]
+  track            SkillTrack            @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  prerequisite     SkillNode?            @relation("NodePrereq", fields: [prerequisiteId], references: [id])
+  dependents       SkillNode[]           @relation("NodePrereq")
+  progress         SkillProgress[]
+}
+
+model SkillProgress {
+  id          String      @id @default(cuid())
+  userId      String
+  nodeId      String
+  status      String      @default("not_started")
+  verifiedBy  String?
+  verifiedAt  DateTime?
+  evidenceUrl String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  readPct     Int         @default(0)
+  user        UserProfile @relation(fields: [userId], references: [id])
+  node        SkillNode   @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, nodeId])
+}
+
+model BlockProgress {
+  id        String      @id @default(cuid())
+  userId    String
+  nodeId    String
+  blockId   String
+  state     String
+  payload   String?     @default("{}")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  user      UserProfile @relation(fields: [userId], references: [id])
+  node      SkillNode   @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, nodeId, blockId])
+}
+
+model Challenge {
+  id          String                @id @default(cuid())
+  title       String
+  description String
+  tier        String                @default("all")
+  xpReward    Int                   @default(30)
+  dueDate     DateTime
+  createdBy   String
+  status      String                @default("open")
+  createdAt   DateTime              @default(now())
+  trainerId   String?
+  trainer     UserProfile?          @relation("TrainerChallenges", fields: [trainerId], references: [id])
+  submissions ChallengeSubmission[]
+}
+
+model ChallengeSubmission {
+  id            String      @id @default(cuid())
+  challengeId   String
+  userId        String
+  submissionUrl String
+  note          String?
+  score         Int?
+  scoredBy      String?
+  scoredAt      DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          UserProfile @relation(fields: [userId], references: [id])
+  challenge     Challenge   @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+}
+
+model QuizResponse {
+  id             String       @id @default(cuid())
+  userId         String
+  nodeId         String
+  blockId        String
+  questionIdx    Int
+  questionType   String
+  answerChoice   Int?
+  answerText     String?
+  autoGraded     Boolean      @default(false)
+  autoScore      Int?
+  gradeScore     Int?
+  gradedBy       String?
+  gradedAt       DateTime?
+  gradeNotes     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  fileUrl        String?
+  manualOverride Boolean      @default(false)
+  rubricScores   String?
+  user           UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  node           SkillNode    @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  gradedByUser   UserProfile? @relation("GradedBy", fields: [gradedBy], references: [id])
+
+  @@unique([userId, nodeId, blockId, questionIdx])
+}
+
+model QuizBlockSubmission {
+  id                 String                  @id @default(cuid())
+  userId             String
+  nodeId             String
+  blockId            String
+  trackId            String
+  status             String                  @default("submitted")
+  totalQuestions     Int
+  gradedCount        Int                     @default(0)
+  avgScore           Int?
+  gradedNotified     Boolean                 @default(false)
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  autoSubmitted      Boolean                 @default(false)
+  cheatAttempts      Int                     @default(0)
+  cheatLog           String?
+  marksReleased      Boolean                 @default(false)
+  marksReleasedAt    DateTime?
+  marksReleasedBy    String?
+  cheatNotifications CheatNotification[]
+  user               UserProfile             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track              SkillTrack              @relation("QuizBlockSubmission", fields: [trackId], references: [id], onDelete: Cascade)
+  node               SkillNode               @relation("QuizBlockSubmission", fields: [nodeId], references: [id], onDelete: Cascade)
+  gradeNotifications QuizGradeNotification[]
+
+  @@unique([userId, nodeId, blockId])
+}
+
+model QuizGradeNotification {
+  id                String              @id @default(cuid())
+  userId            String
+  blockSubmissionId String
+  title             String
+  message           String
+  read              Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  user              UserProfile         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submission        QuizBlockSubmission @relation(fields: [blockSubmissionId], references: [id], onDelete: Cascade)
+}
+
+model CheatNotification {
+  id                String              @id @default(cuid())
+  trackId           String
+  studentId         String
+  blockSubmissionId String
+  studentName       String
+  nodeTitle         String
+  attemptNumber     Int
+  autoSubmitted     Boolean             @default(false)
+  read              Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  student           UserProfile         @relation("CheatStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  submission        QuizBlockSubmission @relation(fields: [blockSubmissionId], references: [id], onDelete: Cascade)
+}
+
+model XpEvent {
+  id        String      @id @default(cuid())
+  userId    String
+  amount    Int
+  reason    String
+  refId     String?
+  createdAt DateTime    @default(now())
+  user      UserProfile @relation(fields: [userId], references: [id])
+}
+
+model TrainerModule {
+  id         String            @id @default(cuid())
+  trainerId  String
+  trackId    String?
+  moduleId   String?
+  assignedAt DateTime          @default(now())
+  trainer    UserProfile       @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  module     CurriculumModule? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  track      SkillTrack?       @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerId, moduleId])
+  @@unique([trainerId, trackId])
+}
+
+model CustomTocEntry {
+  id          String     @id @default(cuid())
+  trackId     String
+  trainerId   String
+  type        String
+  parentId    String?
+  title       String
+  description String?
+  hours       Int?
+  order       Int        @default(0)
+  isCustom    Boolean    @default(true)
+  sourceId    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  track       SkillTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([trackId, type])
+  @@index([parentId])
+}
+
+model CurriculumModule {
+  id             String          @id @default(cuid())
+  code           String          @unique
+  name           String
+  department     String
+  level          String
+  category       String
+  description    String?
+  pdfPath        String
+  pdfFileName    String
+  fileSize       Int?
+  order          Int             @default(0)
+  credits        Int?
+  hours          Int?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  trainerModules TrainerModule[]
+
+  @@index([department, level, category])
+  @@index([level, department])
+}
+
+model EntranceTest {
+  id                String         @id @default(cuid())
+  userId            String         @unique
+  trade             String
+  level             String
+  status            String         @default("pending")
+  submittedAt       DateTime?
+  duration          Int?
+  autoSubmitted     Boolean        @default(false)
+  totalQuestions    Int            @default(0)
+  answeredQuestions Int            @default(0)
+  totalPoints       Int            @default(0)
+  objectivePoints   Int            @default(0)
+  subjectivePoints  Int            @default(0)
+  objectiveScore    Float          @default(0)
+  subjectiveScore   Float          @default(0)
+  scoredPoints      Float          @default(0)
+  percentage        Float          @default(0)
+  aiGradedAt        DateTime?
+  teacherReviewedAt DateTime?
+  finalStatus       String?
+  reviewedBy        String?
+  reviewNotes       String?
+  marksReleasedAt   DateTime?
+  marksReleasedBy   String?
+  passingScore      Int            @default(60)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  templateData      String?
+  reviewer          UserProfile?   @relation("EntranceTestReviewer", fields: [reviewedBy], references: [id])
+  user              UserProfile    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responses         TestResponse[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([trade, level])
+}
+
+model TestResponse {
+  id                String             @id @default(cuid())
+  entranceTestId    String
+  questionId        String
+  questionType      String
+  questionText      String
+  studentAnswer     String
+  correctAnswer     String?
+  isCorrect         Boolean?
+  pointsAwarded     Float              @default(0)
+  maxPoints         Int
+  rubric            String?
+  aiScore           Float?
+  feedback          String?
+  needsGrading      Boolean            @default(false)
+  gradedAt          DateTime?
+  createdAt         DateTime           @default(now())
+  subjectiveGrading SubjectiveGrading?
+  entranceTest      EntranceTest       @relation(fields: [entranceTestId], references: [id], onDelete: Cascade)
+
+  @@index([entranceTestId])
+  @@index([needsGrading])
+}
+
+model XAPIStatement {
+  id         String      @id @default(cuid())
+  actor      String
+  verb       String
+  object     String
+  result     String?
+  context    String?
+  timestamp  DateTime    @default(now())
+  stored     DateTime    @default(now())
+  userId     String
+  moduleCode String?
+  synced     Boolean     @default(false)
+  syncedAt   DateTime?
+  user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([moduleCode])
+  @@index([synced])
+  @@index([timestamp])
+}
+
+model ContentActivity {
+  id              String      @id @default(cuid())
+  userId          String
+  contentType     String
+  contentId       String
+  moduleCode      String
+  duration        Int         @default(0)
+  progress        Float       @default(0)
+  completed       Boolean     @default(false)
+  score           Float?
+  attemptNumber   Int         @default(1)
+  xapiStatementId String?
+  metadata        String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentType, contentId, attemptNumber])
+  @@index([userId, moduleCode])
+  @@index([completed])
+}
+
+model SubjectiveGrading {
+  id               String       @id @default(cuid())
+  responseId       String       @unique
+  aiScore          Float?
+  aiFeedback       String?
+  aiStrengths      String?
+  aiImprovements   String?
+  rubricBreakdown  String?
+  teacherScore     Float?
+  teacherFeedback  String?
+  reviewStatus     String       @default("pending")
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  flaggedForReview Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  response         TestResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+
+  @@index([reviewStatus])
+  @@index([reviewedBy])
+}

@@ -1,0 +1,104 @@
+LINUX COMMAND LINE
+==================
+
+The command line lets you control your computer with text.
+Every professional developer uses it daily. Master it early.
+
+OPENING A TERMINAL
+------------------
+  Linux:   Ctrl + Alt + T  or search "Terminal"
+  macOS:   Cmd + Space → type "Terminal"
+  Windows: Install WSL (Windows Subsystem for Linux) or use Git Bash
+
+THE PROMPT
+----------
+  alice@runda:~$
+  │     │     │└── $ means regular user (# means root/admin)
+  │     │     └─── ~ means home directory
+  │     └───────── computer name (hostname)
+  └─────────────── your username
+
+NAVIGATION
+----------
+  pwd               print working directory (where am I?)
+  ls                list files in current directory
+  ls -la            list all files including hidden, with details
+  cd Documents      change into Documents folder
+  cd ..             go up one level
+  cd ~              go to home directory
+  cd /              go to root directory
+
+FILE OPERATIONS
+---------------
+  touch file.txt          create an empty file
+  mkdir projects          create a directory
+  mkdir -p a/b/c          create nested directories
+  cp file.txt backup.txt  copy a file
+  mv file.txt docs/       move a file into docs/
+  mv old.txt new.txt      rename a file
+  rm file.txt             delete a file (no recycle bin!)
+  rm -rf folder/          delete a folder and everything inside (careful!)
+
+READING FILES
+-------------
+  cat file.txt            print entire file
+  less file.txt           scroll through file (q to quit)
+  head -n 10 file.txt     first 10 lines
+  tail -n 10 file.txt     last 10 lines
+  tail -f log.txt         follow a file as it grows (Ctrl+C to stop)
+
+SEARCHING
+---------
+  grep "error" log.txt          find lines containing "error"
+  grep -r "TODO" ./             search recursively in all files
+  find . -name "*.txt"          find all .txt files from here
+  find . -name "*.py" -newer seed.ts   files newer than seed.ts
+
+USEFUL SHORTCUTS
+----------------
+  Tab           auto-complete file/command names
+  Ctrl + C      cancel running command
+  Ctrl + L      clear the screen (same as clear)
+  Up arrow      previous command
+  Ctrl + R      search command history
+  !!            repeat last command
+  sudo !!       repeat last command as admin
+
+PIPES AND REDIRECTION
+---------------------
+  |   pipe — send output of one command to another
+  >   redirect output to a file (overwrites)
+  >>  redirect output to a file (appends)
+
+  ls -la | grep ".txt"          list only .txt files
+  cat file.txt | wc -l          count lines in a file
+  echo "hello" > output.txt     write "hello" to output.txt
+  echo "world" >> output.txt    append "world" to output.txt
+  ls > filelist.txt             save directory listing to file
+
+PERMISSIONS
+-----------
+  chmod +x script.sh      make a file executable
+  chmod 644 data.txt      set specific permissions
+  sudo command            run as administrator
+  whoami                  print current username
+  id                      show user ID and groups
+
+PACKAGE MANAGEMENT (Ubuntu/Debian)
+------------------------------------
+  sudo apt update              refresh package list
+  sudo apt install python3     install Python
+  sudo apt install git         install Git
+  sudo apt remove package      uninstall a package
+
+PRACTICE
+--------
+Open a terminal and complete these tasks:
+  1. Print your current directory
+  2. Create a folder called runda-practice
+  3. Go into it and create 3 files: notes.txt, code.py, readme.md
+  4. List the files with details (ls -la)
+  5. Write "Hello RUNDA" into notes.txt using echo and >
+  6. Print the contents of notes.txt using cat
+  7. Search for the word "RUNDA" in all files using grep
+  8. Go back to home directory and delete runda-practice and everything in it

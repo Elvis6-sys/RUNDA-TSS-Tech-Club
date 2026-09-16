@@ -1,0 +1,128 @@
+CONTROL FLOW
+============
+
+Control flow decides WHICH code runs and HOW MANY TIMES it runs.
+Without it, every program would just run top to bottom once.
+
+IF / ELIF / ELSE
+----------------
+  score = 75
+
+  if score >= 80:
+      print("Distinction")
+  elif score >= 60:
+      print("Pass")
+  elif score >= 40:
+      print("Borderline")
+  else:
+      print("Needs improvement")
+
+  # Output: Pass
+
+Rules:
+  - Indentation (4 spaces) defines the block — Python has no { }
+  - elif = "else if" — checked only if the previous condition was False
+  - else — runs if nothing above matched
+  - Only ONE branch runs
+
+NESTED IF
+---------
+  is_member = True
+  role = "l4"
+
+  if is_member:
+      if role == "l5":
+          print("Full access")
+      else:
+          print("Standard access")
+  else:
+      print("Please apply to join")
+
+FOR LOOP
+--------
+Repeats for each item in a sequence:
+
+  subjects = ["Math", "Python", "Web Dev", "Git"]
+
+  for subject in subjects:
+      print("Studying:", subject)
+
+  # Output:
+  # Studying: Math
+  # Studying: Python
+  # Studying: Web Dev
+  # Studying: Git
+
+FOR LOOP WITH RANGE
+-------------------
+  for i in range(5):        # 0, 1, 2, 3, 4
+      print(i)
+
+  for i in range(1, 6):     # 1, 2, 3, 4, 5
+      print(i)
+
+  for i in range(0, 10, 2): # 0, 2, 4, 6, 8  (step of 2)
+      print(i)
+
+WHILE LOOP
+----------
+Repeats WHILE a condition is True:
+
+  count = 0
+  while count < 3:
+      print("Count:", count)
+      count += 1   # same as count = count + 1
+
+  # Output: Count: 0 / Count: 1 / Count: 2
+
+  WARNING: if the condition never becomes False, the loop runs forever.
+  Always make sure something inside the loop changes the condition.
+
+BREAK AND CONTINUE
+------------------
+  break    — exit the loop immediately
+  continue — skip the rest of this iteration, go to next
+
+  # Find the first score above 90
+  scores = [72, 85, 91, 68, 95]
+  for score in scores:
+      if score > 90:
+          print("Found:", score)
+          break   # stop looking
+
+  # Print only passing scores
+  for score in scores:
+      if score < 60:
+          continue   # skip this one
+      print("Pass:", score)
+
+COMBINING LOOPS AND CONDITIONS
+-------------------------------
+  students = [
+    {"name": "Alice", "score": 92},
+    {"name": "Bob",   "score": 55},
+    {"name": "Carol", "score": 78},
+  ]
+
+  for student in students:
+      if student["score"] >= 60:
+          status = "Pass"
+      else:
+          status = "Fail"
+      print(f"{student['name']}: {status}")
+
+  # Output:
+  # Alice: Pass
+  # Bob: Fail
+  # Carol: Pass
+
+PRACTICE
+--------
+Write a program that:
+  1. Creates a list of 5 numbers
+  2. Uses a for loop to print each number
+  3. Inside the loop, prints "Even" if the number is divisible by 2
+     (hint: use number % 2 == 0)
+  4. Prints "Odd" otherwise
+  5. BONUS: use a while loop to keep asking the user for a number
+     until they type "quit"

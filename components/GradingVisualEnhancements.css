@@ -1,0 +1,295 @@
+/* Enhanced Grading Dashboard Animations & Visual Effects */
+
+/* Smooth fade-in animation for grading cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.grade-card-enter {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Pulsing animation for pending badge */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(236, 72, 153, 0);
+  }
+}
+
+.pulse-badge {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Shimmer effect for AI grading button */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer-button {
+  background: linear-gradient(
+    90deg,
+    rgba(139, 92, 246, 0.8) 0%,
+    rgba(167, 139, 250, 1) 50%,
+    rgba(139, 92, 246, 0.8) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Score color transitions */
+.score-transition {
+  transition: color 0.5s ease, transform 0.2s ease;
+}
+
+.score-transition:hover {
+  transform: scale(1.05);
+}
+
+/* Confidence meter animation */
+@keyframes fill-meter {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--meter-width);
+  }
+}
+
+.confidence-meter {
+  animation: fill-meter 0.8s ease-out;
+}
+
+/* Hover effect for question cards */
+.question-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.question-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -8px rgba(139, 92, 246, 0.3);
+}
+
+/* Gradient background animations */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-animated {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Feedback card slide-in */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.feedback-slide-in {
+  animation: slideInRight 0.4s ease-out;
+}
+
+/* Success checkmark animation */
+@keyframes checkmark-pop {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(-45deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.checkmark-animation {
+  animation: checkmark-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Loading dots animation */
+@keyframes loading-dots {
+  0%, 20% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+.loading-dot:nth-child(1) {
+  animation: loading-dots 1.4s infinite;
+}
+
+.loading-dot:nth-child(2) {
+  animation: loading-dots 1.4s infinite 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+  animation: loading-dots 1.4s infinite 0.4s;
+}
+
+/* Score badge pulse on update */
+@keyframes score-update-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.score-updated {
+  animation: score-update-pulse 0.6s ease-out;
+}
+
+/* AI sparkle effect */
+@keyframes sparkle-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.ai-sparkle {
+  animation: sparkle-rotate 3s linear infinite;
+}
+
+/* Progress bar fill animation */
+@keyframes progress-fill {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+.progress-bar-fill {
+  animation: progress-fill 0.8s ease-out;
+}
+
+/* Tooltip fade-in */
+@keyframes tooltip-fade {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip-show {
+  animation: tooltip-fade 0.2s ease-out;
+}
+
+/* Grade comparison slide */
+@keyframes slide-compare {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.comparison-slide {
+  animation: slide-compare 0.5s ease-out;
+}
+
+/* Modal backdrop blur animation */
+@keyframes backdrop-blur {
+  from {
+    backdrop-filter: blur(0px);
+    opacity: 0;
+  }
+  to {
+    backdrop-filter: blur(8px);
+    opacity: 1;
+  }
+}
+
+.modal-backdrop {
+  animation: backdrop-blur 0.3s ease-out;
+}
+
+/* Button press effect */
+.button-press:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+/* Glow effect for high scores */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
+  }
+}
+
+.high-score-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Low score warning pulse */
+@keyframes warning-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+  }
+}
+
+.low-score-warning {
+  animation: warning-pulse 2s ease-in-out infinite;
+}

@@ -1,0 +1,484 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Root variables ───────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+  --cyan: #00f5ff;
+  --green: #39ff14;
+  --purple: #bf5fff;
+  --orange: #ff6b00;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ── Typography ────────────────────────────────────────────────── */
+a {
+  @apply text-sky-300 hover:text-sky-200 transition-colors;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* ── Layout ────────────────────────────────────────────────────── */
+.container {
+  @apply mx-auto max-w-6xl px-4 sm:px-6 lg:px-8;
+}
+
+.card {
+  @apply rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/30;
+}
+
+/* ── Gradient text ─────────────────────────────────────────────── */
+.gradient-text {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+}
+
+.gradient-text-green {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, #34d399 0%, #06b6d4 100%);
+}
+
+.gradient-text-orange {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, #fb923c 0%, #f472b6 100%);
+}
+
+/* ── Shimmer button ────────────────────────────────────────────── */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.18) 50%,
+      transparent 60%);
+  background-size: 200% 100%;
+  animation: shimmer 2.2s linear infinite;
+}
+
+/* ── Glow card ─────────────────────────────────────────────────── */
+.glow-card {
+  position: relative;
+  border-radius: 1.5rem;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(14, 165, 233, 0.15);
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+
+.glow-card:hover {
+  border-color: rgba(14, 165, 233, 0.5);
+  box-shadow: 0 0 30px rgba(14, 165, 233, 0.15), 0 20px 40px rgba(0, 0, 0, 0.4);
+  transform: translateY(-4px);
+}
+
+/* ── Glass panel ───────────────────────────────────────────────── */
+.glass {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Particle orb ──────────────────────────────────────────────── */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Intersection reveal ───────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Stat numbers ──────────────────────────────────────────────── */
+.stat-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ── Marquee strip ─────────────────────────────────────────────── */
+.marquee-inner {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+.marquee-inner:hover {
+  animation-play-state: paused;
+}
+
+/* ── Level pill ────────────────────────────────────────────────── */
+.level-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Lightbox backdrop ─────────────────────────────────────────── */
+.lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.93);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Radial gradient utility ───────────────────────────────────── */
+.bg-gradient-radial {
+  background-image: radial-gradient(var(--tw-gradient-stops));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   KEYFRAMES
+═══════════════════════════════════════════════════════════════ */
+
+/* Hero background image float (vertical bob) */
+@keyframes bgFloat {
+  0% {
+    transform: translateY(0px);
+  }
+
+  100% {
+    transform: translateY(-26px);
+  }
+}
+
+/* Shimmer sweep */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Marquee scroll */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Fade in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Blink cursor */
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Floating bob (used by scroll indicator) */
+@keyframes floatSlow {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Glow pulse (CTA button) */
+@keyframes glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 50px rgba(14, 165, 233, 0.7), 0 0 90px rgba(14, 165, 233, 0.25);
+  }
+}
+
+/* Orb drift (colour blobs) */
+@keyframes orbDrift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(30px, -40px) scale(1.1);
+  }
+
+  50% {
+    transform: translate(-20px, -60px) scale(0.95);
+  }
+
+  75% {
+    transform: translate(-40px, -20px) scale(1.05);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* ── Map custom keyframes to Tailwind animation classes ─────────
+   (Tailwind picks these up via the config's animation key.
+    We also define the classes directly here for reliability.) ── */
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.animate-float-slow {
+  animation: floatSlow 8s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+.animate-orb-drift {
+  animation: orbDrift 15s ease-in-out infinite;
+}
+
+.animate-orb-drift-2 {
+  animation: orbDrift 20s ease-in-out infinite reverse;
+}
+
+.animate-orb-drift-3 {
+  animation: orbDrift 25s ease-in-out infinite 5s;
+}
+
+.animate-shimmer {
+  animation: shimmer 2.2s linear infinite;
+}
+
+/* ── Landing Page Grid Pattern ────────────────────────────────── */
+.bg-grid-slate-700\/25 {
+  background-image:
+    linear-gradient(to right, rgb(51 65 85 / 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(51 65 85 / 0.25) 1px, transparent 1px);
+}
+
+/* ── Float Animation for Landing Page ─────────────────────────── */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ── DOCX Content Styling ──────────────────────────────────────── */
+.docx-content {
+  line-height: 1.8;
+}
+
+.docx-content p {
+  margin-bottom: 1rem;
+}
+
+.docx-content h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #e2e8f0;
+}
+
+.docx-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #cbd5e1;
+}
+
+.docx-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #cbd5e1;
+}
+
+.docx-content ul,
+.docx-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.docx-content li {
+  margin-bottom: 0.5rem;
+}
+
+.docx-content strong,
+.docx-content b {
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.docx-content em,
+.docx-content i {
+  font-style: italic;
+}
+
+.docx-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.docx-content table td,
+.docx-content table th {
+  border: 1px solid #334155;
+  padding: 0.75rem;
+}
+
+.docx-content table th {
+  background: rgba(51, 65, 85, 0.5);
+  font-weight: 600;
+}
+
+.docx-content a {
+  color: #38bdf8;
+  text-decoration: underline;
+}
+
+.docx-content a:hover {
+  color: #7dd3fc;
+}
+
+.docx-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+}
+
+.docx-content blockquote {
+  border-left: 4px solid #3b82f6;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.docx-content code {
+  background: rgba(51, 65, 85, 0.5);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.docx-content pre {
+  background: rgba(15, 23, 42, 0.8);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.docx-content pre code {
+  background: none;
+  padding: 0;
+}

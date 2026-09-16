@@ -1,0 +1,115 @@
+FUNCTIONS & MODULES
+===================
+
+A function is a named block of code you write once and reuse many times.
+A module is a file of functions you can import into any project.
+
+DEFINING A FUNCTION
+-------------------
+  def greet(name):
+      message = f"Muraho, {name}!"
+      return message
+
+  print(greet("Alice"))   # Muraho, Alice!
+  print(greet("Bob"))     # Muraho, Bob!
+
+  def  — keyword to define a function
+  greet — the function name
+  name  — parameter (input)
+  return — sends a value back to the caller
+
+MULTIPLE PARAMETERS
+-------------------
+  def add(a, b):
+      return a + b
+
+  result = add(10, 5)
+  print(result)   # 15
+
+DEFAULT PARAMETERS
+------------------
+  def greet(name, language="English"):
+      if language == "Kinyarwanda":
+          return f"Muraho, {name}!"
+      return f"Hello, {name}!"
+
+  print(greet("Alice"))                  # Hello, Alice!
+  print(greet("Alice", "Kinyarwanda"))   # Muraho, Alice!
+
+FUNCTIONS WITHOUT RETURN
+------------------------
+Some functions just DO something without returning a value:
+
+  def print_divider(char="-", length=30):
+      print(char * length)
+
+  print_divider()          # ------------------------------
+  print_divider("=", 20)   # ====================
+
+SCOPE
+-----
+Variables inside a function only exist inside that function:
+
+  def calculate():
+      result = 42    # only exists inside calculate()
+      return result
+
+  print(result)   # ERROR — result is not defined here
+
+BUILT-IN MODULES
+----------------
+Python comes with many modules ready to import:
+
+  import math
+  print(math.sqrt(16))    # 4.0
+  print(math.pi)          # 3.14159...
+  print(math.floor(3.7))  # 3
+
+  import random
+  print(random.randint(1, 10))   # random number 1-10
+  print(random.choice(["a", "b", "c"]))  # random item
+
+  import datetime
+  now = datetime.datetime.now()
+  print(now.year)    # 2025
+  print(now.strftime("%d/%m/%Y"))  # 15/01/2025
+
+WRITING YOUR OWN MODULE
+-----------------------
+Create a file called helpers.py:
+
+  def celsius_to_fahrenheit(c):
+      return (c * 9/5) + 32
+
+  def is_even(n):
+      return n % 2 == 0
+
+Then import it in another file:
+
+  from helpers import celsius_to_fahrenheit, is_even
+
+  print(celsius_to_fahrenheit(100))  # 212.0
+  print(is_even(7))                  # False
+
+INSTALLING THIRD-PARTY MODULES WITH PIP
+----------------------------------------
+pip is Python's package manager — like an app store for code.
+
+  pip install requests       # HTTP library
+  pip install colorama       # coloured terminal output
+
+  Then in your code:
+  import requests
+  response = requests.get("https://api.github.com")
+  print(response.status_code)   # 200
+
+PRACTICE
+--------
+Write a module called calculator.py with 4 functions:
+  add(a, b), subtract(a, b), multiply(a, b), divide(a, b)
+
+In a separate file main.py:
+  1. Import all 4 functions
+  2. Ask the user for two numbers and an operation (+, -, *, /)
+  3. Call the correct function and print the result
+  4. Handle division by zero with an if statement

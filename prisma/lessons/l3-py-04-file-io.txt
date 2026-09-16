@@ -1,0 +1,108 @@
+FILE I/O & ERROR HANDLING
+=========================
+
+File I/O means reading from and writing to files.
+Error handling means catching problems before they crash your program.
+
+WRITING TO A FILE
+-----------------
+  with open("notes.txt", "w") as f:
+      f.write("First line\n")
+      f.write("Second line\n")
+
+  "w" = write mode (creates file, overwrites if exists)
+  "a" = append mode (adds to end of existing file)
+  with ... as f — automatically closes the file when done
+
+READING FROM A FILE
+-------------------
+  # Read entire file as one string
+  with open("notes.txt", "r") as f:
+      content = f.read()
+      print(content)
+
+  # Read line by line
+  with open("notes.txt", "r") as f:
+      for line in f:
+          print(line.strip())   # strip() removes the \n at end
+
+  # Read all lines into a list
+  with open("notes.txt", "r") as f:
+      lines = f.readlines()
+  print(lines[0])   # "First line\n"
+
+PRACTICAL EXAMPLE — SAVING STUDENT SCORES
+------------------------------------------
+  # Write scores
+  students = [("Alice", 92), ("Bob", 78), ("Carol", 85)]
+
+  with open("scores.txt", "w") as f:
+      for name, score in students:
+          f.write(f"{name},{score}\n")
+
+  # Read scores back
+  with open("scores.txt", "r") as f:
+      for line in f:
+          name, score = line.strip().split(",")
+          print(f"{name} scored {score}")
+
+ERROR HANDLING WITH TRY/EXCEPT
+-------------------------------
+When something might go wrong, wrap it in try/except:
+
+  try:
+      number = int(input("Enter a number: "))
+      result = 100 / number
+      print(f"100 / {number} = {result}")
+  except ValueError:
+      print("That's not a valid number.")
+  except ZeroDivisionError:
+      print("Cannot divide by zero.")
+
+  # The program continues instead of crashing
+
+COMMON EXCEPTIONS
+-----------------
+  ValueError        — wrong type (e.g. int("hello"))
+  ZeroDivisionError — dividing by zero
+  FileNotFoundError — file doesn't exist
+  IndexError        — list index out of range
+  KeyError          — dictionary key doesn't exist
+  TypeError         — wrong type for an operation
+
+HANDLING FILE NOT FOUND
+------------------------
+  try:
+      with open("data.txt", "r") as f:
+          content = f.read()
+  except FileNotFoundError:
+      print("File not found. Creating a new one.")
+      with open("data.txt", "w") as f:
+          f.write("")
+
+FINALLY
+-------
+finally always runs — even if an error occurred:
+
+  try:
+      f = open("data.txt", "r")
+      content = f.read()
+  except FileNotFoundError:
+      print("File missing.")
+  finally:
+      print("Done.")   # always prints
+
+THE WITH STATEMENT IS BETTER
+-----------------------------
+Using with open(...) as f handles closing automatically,
+even if an error occurs. Always prefer it over manual open/close.
+
+PRACTICE
+--------
+Build a simple note-taking program:
+  1. Show a menu: (1) Add note  (2) View notes  (3) Quit
+  2. Option 1: ask for text, append it to notes.txt with a timestamp
+     (use datetime.datetime.now())
+  3. Option 2: read and print all lines from notes.txt
+  4. Wrap file operations in try/except FileNotFoundError
+  5. Use a while loop to keep showing the menu until the user quits

@@ -1,0 +1,121 @@
+NETWORKING FUNDAMENTALS
+=======================
+
+Every time you open a webpage, send a message, or push code to GitHub,
+data travels across a network. This lesson explains how.
+
+WHAT IS A NETWORK?
+------------------
+A network is two or more computers connected so they can share data.
+
+  LAN (Local Area Network) — computers in one building (your school)
+  WAN (Wide Area Network)  — computers across cities/countries
+  Internet                 — the global network of all networks
+
+IP ADDRESSES
+------------
+Every device on a network has an IP address — like a postal address.
+
+  IPv4: 192.168.1.5   (4 numbers, 0-255, separated by dots)
+  IPv6: 2001:0db8:85a3::8a2e:0370:7334  (newer, more addresses)
+
+  Private IP (inside your network): 192.168.x.x or 10.x.x.x
+  Public IP  (visible on internet): assigned by your ISP
+
+  Find your IP:
+    Linux/macOS: ip addr  or  ifconfig
+    Windows:     ipconfig
+
+DNS (Domain Name System)
+------------------------
+DNS translates human-readable names to IP addresses.
+
+  You type:    google.com
+  DNS returns: 142.250.185.46
+  Browser connects to: 142.250.185.46
+
+  Without DNS you'd have to memorise IP addresses for every website.
+  DNS is the internet's phone book.
+
+  Check DNS lookup:
+    nslookup google.com
+    dig google.com
+
+TCP vs UDP
+----------
+TCP (Transmission Control Protocol):
+  - Reliable — guarantees delivery and order
+  - Slower — has handshake and acknowledgement overhead
+  - Used for: web (HTTP), email, file transfer, databases
+
+UDP (User Datagram Protocol):
+  - Fast — no handshake, fire and forget
+  - Unreliable — packets may be lost or arrive out of order
+  - Used for: video calls, gaming, live streaming, DNS
+
+  LiveKit (used in this project for audio) uses UDP — speed matters
+  more than perfect reliability for real-time audio.
+
+HTTP & HTTPS
+------------
+HTTP (HyperText Transfer Protocol) is how browsers talk to servers.
+
+  Request:
+    GET /lessons HTTP/1.1
+    Host: runda.app
+
+  Response:
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    { "lessons": [...] }
+
+  HTTPS = HTTP + TLS encryption
+  The S means the data is encrypted — nobody can read it in transit.
+  Always use HTTPS in production. Never send passwords over HTTP.
+
+PORTS
+-----
+A port is like a door number on an IP address.
+One computer can run many services, each on a different port.
+
+  Common ports:
+    80    HTTP
+    443   HTTPS
+    22    SSH
+    5432  PostgreSQL
+    3000  Next.js dev server (this project)
+    6543  Supabase PgBouncer (this project)
+
+  When you visit http://localhost:3000 you are connecting to
+  IP 127.0.0.1 (your own computer) on port 3000.
+
+THE REQUEST-RESPONSE CYCLE
+---------------------------
+What happens when you open runda.app/lessons:
+
+  1. Browser asks DNS: what is the IP of runda.app?
+  2. DNS replies: 76.76.21.21
+  3. Browser opens TCP connection to 76.76.21.21:443
+  4. TLS handshake — encryption is established
+  5. Browser sends: GET /lessons HTTP/1.1
+  6. Server processes the request, queries the database
+  7. Server sends back: 200 OK + JSON data
+  8. Browser renders the page
+
+This entire process takes ~200ms on a good connection.
+
+PING AND TRACEROUTE
+-------------------
+  ping google.com          test if a host is reachable, measure latency
+  traceroute google.com    show every hop between you and the destination
+  curl https://api.github.com   make an HTTP request from the terminal
+
+PRACTICE
+--------
+  1. Find your computer's IP address
+  2. Run: ping google.com  (Ctrl+C to stop) — what is the latency?
+  3. Run: nslookup github.com — what IP does it resolve to?
+  4. Run: curl https://api.github.com — what JSON does it return?
+  5. Open your browser DevTools (F12) → Network tab
+     Reload a page and find: the HTTP method, status code, and response time
+     of the first request

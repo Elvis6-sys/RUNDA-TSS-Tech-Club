@@ -1,0 +1,103 @@
+GIT & VERSION CONTROL
+=====================
+
+Git tracks every change you make to your code.
+It lets you go back in time, work in teams, and never lose your work.
+
+WHY GIT?
+--------
+Without Git:
+  project-v1.html
+  project-v2.html
+  project-FINAL.html
+  project-FINAL-real.html   ← we've all been here
+
+With Git:
+  One folder. Full history. Every change recorded.
+
+CORE CONCEPTS
+-------------
+  Repository (repo) — a folder tracked by Git
+  Commit            — a saved snapshot of your code
+  Branch            — a parallel version of your code
+  Remote            — a copy of your repo on GitHub/GitLab
+
+SETUP (once per computer)
+--------------------------
+  git config --global user.name  "Your Name"
+  git config --global user.email "you@example.com"
+
+STARTING A PROJECT
+------------------
+  git init                    # turn a folder into a Git repo
+  git clone <url>             # download an existing repo from GitHub
+
+THE DAILY WORKFLOW
+------------------
+  1. Make changes to your files
+
+  2. See what changed:
+       git status
+
+  3. Stage the changes you want to save:
+       git add index.html          # one file
+       git add .                   # all changed files
+
+  4. Commit with a message:
+       git commit -m "Add navigation bar"
+
+  5. Push to GitHub:
+       git push origin main
+
+VIEWING HISTORY
+---------------
+  git log                     # full history
+  git log --oneline           # compact one-line history
+
+BRANCHES
+--------
+Branches let you work on a feature without breaking the main code.
+
+  git branch feature-login    # create a branch
+  git checkout feature-login  # switch to it
+  # (or in one step:)
+  git checkout -b feature-login
+
+  # When done, merge back:
+  git checkout main
+  git merge feature-login
+
+UNDOING MISTAKES
+----------------
+  git restore index.html      # discard unsaved changes to a file
+  git reset HEAD~1            # undo the last commit (keep changes)
+
+GITHUB
+------
+GitHub is a website that hosts Git repositories online.
+
+  1. Create a free account at github.com
+  2. Create a new repository
+  3. Follow the instructions to push your local repo:
+       git remote add origin https://github.com/yourname/repo.git
+       git push -u origin main
+
+GOOD COMMIT MESSAGES
+--------------------
+Bad:  "fix stuff"
+Bad:  "asdfgh"
+Good: "Fix nav links not showing on mobile"
+Good: "Add login form validation"
+Good: "Seed 10 L3 lessons to database"
+
+Rule: complete the sentence "This commit will ___"
+
+PRACTICE
+--------
+  1. Create a new folder called my-portfolio
+  2. Run git init inside it
+  3. Create index.html with your name in an <h1>
+  4. git add . and git commit -m "Initial commit"
+  5. Make a change (add a paragraph)
+  6. Commit again with a descriptive message
+  7. Run git log --oneline to see your history

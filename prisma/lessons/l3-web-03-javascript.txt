@@ -1,0 +1,115 @@
+JAVASCRIPT FUNDAMENTALS
+=======================
+
+JavaScript (JS) makes webpages interactive.
+HTML = structure. CSS = appearance. JS = behaviour.
+
+ADDING JS TO A PAGE
+-------------------
+At the bottom of <body>:
+  <script src="script.js"></script>
+
+Or inline (small scripts only):
+  <script>
+    console.log("Hello!");
+  </script>
+
+VARIABLES
+---------
+  let   — can be reassigned
+  const — cannot be reassigned (use this by default)
+
+  const name = "Alice";
+  let score = 0;
+  score = score + 10;   // OK — let can change
+  name = "Bob";         // ERROR — const cannot change
+
+DATA TYPES
+----------
+  String:   "Hello"  or  'Hello'  or  `Hello`
+  Number:   42  or  3.14
+  Boolean:  true  or  false
+  Array:    [1, 2, 3]
+  Object:   { name: "Alice", score: 95 }
+  Null:     null      (intentionally empty)
+  Undefined: undefined (not yet assigned)
+
+FUNCTIONS
+---------
+  function greet(name) {
+    return "Hello, " + name + "!";
+  }
+
+  console.log(greet("Alice"));   // Hello, Alice!
+
+Arrow function (modern style):
+  const greet = (name) => "Hello, " + name + "!";
+
+CONDITIONALS
+------------
+  const score = 75;
+
+  if (score >= 80) {
+    console.log("Distinction");
+  } else if (score >= 60) {
+    console.log("Pass");
+  } else {
+    console.log("Needs improvement");
+  }
+
+LOOPS
+-----
+  // for loop
+  for (let i = 0; i < 5; i++) {
+    console.log("Step", i);
+  }
+
+  // loop over an array
+  const subjects = ["Math", "Python", "Web Dev"];
+  for (const subject of subjects) {
+    console.log(subject);
+  }
+
+DOM MANIPULATION
+----------------
+The DOM (Document Object Model) is the live HTML tree JS can read and change.
+
+  // Select an element
+  const heading = document.querySelector("h1");
+  const btn     = document.getElementById("myBtn");
+
+  // Change content
+  heading.textContent = "Welcome back!";
+
+  // Change style
+  heading.style.color = "#38bdf8";
+
+  // Listen for a click
+  btn.addEventListener("click", () => {
+    alert("Button clicked!");
+  });
+
+PRACTICAL EXAMPLE
+-----------------
+HTML:
+  <p id="score">Score: 0</p>
+  <button id="addBtn">+10 XP</button>
+
+JS:
+  let xp = 0;
+  const scoreEl = document.getElementById("score");
+  const btn = document.getElementById("addBtn");
+
+  btn.addEventListener("click", () => {
+    xp += 10;
+    scoreEl.textContent = "Score: " + xp;
+  });
+
+PRACTICE
+--------
+Build a simple quiz:
+  1. Show a question in a <p> tag
+  2. Add two <button> elements (correct answer + wrong answer)
+  3. When correct button is clicked: show "Correct! +10 XP"
+  4. When wrong button is clicked: show "Try again"
+  5. Track the score and display it

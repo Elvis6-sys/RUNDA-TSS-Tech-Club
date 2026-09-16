@@ -1,0 +1,69 @@
+/**
+ * Tauri v1 Compatibility Layer for Remote URLs
+ * 
+ * In Tauri v1, when loading from localhost:3001, the __TAURI__ global
+ * isn't available. This module provides a workaround by manually calling
+ * the Tauri IPC without relying on @tauri-apps/api.
+ */
+
+// Declare the types we need
+declare global {
+  interface Window {
+    __TAURI_IPC__: ((message: any) => void) | undefined;
+    ipc:
+    | {
+      postMessage: (message: string) => void;
+    }
+    | undefined;
+  }
+}
+
+let uid = 0;
+
+/**
+ * Invoke a Tauri command without using @tauri-apps/api
+ * This uses the internal IPC mechanism directly
+ */
+export async function tauriInvoke<T = any>(cmd: string, args: Record<string, any> = {}): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const callback = uid++;
+    const error = uid++;
+
+    // Create callback handlers
+    (window as any)[`_${callback}`] = (result: T) => {
+      resolve(result);
+      delete (window as any)[`_${callback}`];
+      delete (window as any)[`_${error}`];
+    };
+
+    (window as any)[`_${error}`] = (err: string) => {
+      reject(new Error(err));
+      delete (window as any)[`_${callback}`];
+      delete (window as any)[`_${error}`];
+    };
+
+    // Send the IPC message
+    const message = {
+      cmd,
+      callback,
+      error,
+      ...args,
+    };
+
+    // Try different IPC methods
+    if (window.__TAURI_IPC__) {
+      window.__TAURI_IPC__(message);
+    } else if (window.ipc) {
+      window.ipc.postMessage(JSON.stringify(message));
+    } else {
+      reject(new Error('Tauri IPC not available'));
+    }
+  });
+}
+
+/**
+ * Check if Tauri IPC is available
+ */
+export function isTauriAvailable(): boolean {
+  return !!(window.__TAURI_IPC__ || window.ipc);
+}

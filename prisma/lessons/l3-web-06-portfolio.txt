@@ -1,0 +1,161 @@
+BUILD A STATIC PORTFOLIO SITE
+==============================
+
+This is your capstone for the Web Development track.
+You will build and deploy a real portfolio site that anyone can visit.
+
+WHAT TO BUILD
+-------------
+A personal portfolio with 4 sections:
+  1. Hero      — your name, title, and a short tagline
+  2. About     — 2-3 sentences about you and your goals
+  3. Projects  — 2-3 things you have built (even small ones)
+  4. Contact   — your email or GitHub link
+
+FOLDER STRUCTURE
+----------------
+  my-portfolio/
+    index.html
+    style.css
+    script.js       (optional — for small interactions)
+    images/
+      profile.jpg
+
+STEP 1 — HTML SKELETON
+-----------------------
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Name — Portfolio</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <nav>
+        <span class="logo">YourName</span>
+        <div class="nav-links">
+          <a href="#about">About</a>
+          <a href="#projects">Projects</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </nav>
+    </header>
+
+    <section id="hero">
+      <h1>Hi, I'm <span class="highlight">Your Name</span></h1>
+      <p>L3 Software Development student at RUNDA TSS</p>
+      <a href="#projects" class="btn">See my work</a>
+    </section>
+
+    <section id="about">
+      <h2>About Me</h2>
+      <p>Write 2-3 sentences here.</p>
+    </section>
+
+    <section id="projects">
+      <h2>Projects</h2>
+      <div class="project-grid">
+        <div class="card">
+          <h3>Project Name</h3>
+          <p>Short description of what it does.</p>
+          <a href="#">View on GitHub</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <h2>Contact</h2>
+      <p>Email: <a href="mailto:you@example.com">you@example.com</a></p>
+    </section>
+
+    <footer>
+      <p>© 2025 Your Name</p>
+    </footer>
+  </body>
+  </html>
+
+STEP 2 — CSS STYLING
+---------------------
+Key styles to add in style.css:
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    line-height: 1.6;
+  }
+
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 32px;
+  }
+
+  .nav-links { display: flex; gap: 24px; }
+  .nav-links a { color: #94a3b8; text-decoration: none; }
+  .nav-links a:hover { color: #38bdf8; }
+
+  #hero {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 32px;
+  }
+
+  .highlight { color: #38bdf8; }
+
+  .btn {
+    margin-top: 24px;
+    padding: 12px 28px;
+    background: #38bdf8;
+    color: #0f172a;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .project-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 32px;
+  }
+
+  .card {
+    flex: 1 1 260px;
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+STEP 3 — DEPLOY TO GITHUB PAGES
+---------------------------------
+  1. Push your project to a GitHub repository
+  2. Go to Settings → Pages
+  3. Under "Source" select: Deploy from a branch → main → / (root)
+  4. Click Save
+  5. Wait ~60 seconds
+  6. Your site is live at: https://yourusername.github.io/my-portfolio
+
+CHECKLIST BEFORE SUBMITTING
+-----------------------------
+  ✓ Site loads on mobile (test in DevTools at 375px)
+  ✓ All 4 sections present (Hero, About, Projects, Contact)
+  ✓ Nav links scroll to the correct section
+  ✓ No broken images or links
+  ✓ Deployed and accessible via GitHub Pages URL
+  ✓ GitHub repo has at least 3 commits with clear messages
+
+PRACTICE
+--------
+Build and deploy your portfolio.
+Share the GitHub Pages link in the #projects channel.
+This is your first piece of public evidence for your Competency Passport.

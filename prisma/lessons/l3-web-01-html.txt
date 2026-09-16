@@ -1,0 +1,102 @@
+HTML STRUCTURE & SEMANTICS
+==========================
+
+HTML (HyperText Markup Language) is the skeleton of every webpage.
+It tells the browser WHAT the content is — not how it looks.
+
+WHAT IS A TAG?
+--------------
+HTML uses tags to wrap content:
+
+  <tagname>content goes here</tagname>
+
+  Opening tag: <tagname>
+  Closing tag: </tagname>
+  Some tags are self-closing: <img /> <br /> <input />
+
+A BASIC HTML DOCUMENT
+----------------------
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>My First Page</title>
+    </head>
+    <body>
+      <h1>Hello, Rwanda!</h1>
+      <p>This is my first webpage.</p>
+    </body>
+  </html>
+
+  <!DOCTYPE html>  — tells the browser this is HTML5
+  <head>           — metadata (not visible on page)
+  <body>           — everything the user sees
+
+SEMANTIC TAGS
+-------------
+Semantic tags describe the PURPOSE of the content.
+Use them instead of generic <div> everywhere.
+
+  <header>   — top of the page (logo, nav)
+  <nav>      — navigation links
+  <main>     — the main content area
+  <section>  — a thematic group of content
+  <article>  — self-contained content (blog post, card)
+  <aside>    — sidebar or related content
+  <footer>   — bottom of the page
+
+Example:
+  <body>
+    <header>
+      <h1>RUNDA TSS Tech Club</h1>
+      <nav>
+        <a href="/lessons">Lessons</a>
+        <a href="/challenges">Challenges</a>
+      </nav>
+    </header>
+    <main>
+      <section>
+        <h2>Welcome</h2>
+        <p>Start your learning journey here.</p>
+      </section>
+    </main>
+    <footer>
+      <p>© 2025 RUNDA TSS</p>
+    </footer>
+  </body>
+
+COMMON TAGS
+-----------
+  Headings:    <h1> to <h6>  (h1 = biggest, h6 = smallest)
+  Paragraph:   <p>
+  Bold:        <strong>
+  Italic:      <em>
+  Link:        <a href="https://...">click here</a>
+  Image:       <img src="photo.jpg" alt="description" />
+  List:        <ul> (unordered) or <ol> (ordered) with <li> items
+  Table:       <table> <tr> <th> <td>
+  Form:        <form> <input> <button> <textarea> <select>
+  Division:    <div>  (generic block container)
+  Span:        <span> (generic inline container)
+
+ATTRIBUTES
+----------
+Attributes give extra information to a tag:
+
+  <a href="/dashboard" target="_blank">Open dashboard</a>
+       ↑                ↑
+       where to go      open in new tab
+
+  <img src="logo.png" alt="RUNDA logo" width="200" />
+       ↑               ↑
+       image file      text if image fails to load
+
+PRACTICE
+--------
+Create a file called index.html and build:
+  1. A page with your name as the <h1>
+  2. A short paragraph about yourself
+  3. A <nav> with 3 links (Lessons, Challenges, Chat)
+  4. A <footer> with the current year
+Open it in your browser — no server needed, just double-click the file.

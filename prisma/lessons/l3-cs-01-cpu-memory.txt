@@ -1,0 +1,104 @@
+CPU & MEMORY ARCHITECTURE
+=========================
+
+Understanding how a computer works at the hardware level makes you
+a better programmer — you know WHY things are fast or slow.
+
+THE CPU (Central Processing Unit)
+----------------------------------
+The CPU is the brain of the computer.
+It executes instructions — billions per second.
+
+Main parts of a CPU:
+  ALU (Arithmetic Logic Unit) — does maths and comparisons
+  CU  (Control Unit)          — fetches and decodes instructions
+  Registers                   — tiny, ultra-fast storage inside the CPU
+  Cache                       — small fast memory between CPU and RAM
+
+THE FETCH-DECODE-EXECUTE CYCLE
+--------------------------------
+Every instruction the CPU runs goes through 3 steps:
+
+  1. FETCH   — get the next instruction from memory
+  2. DECODE  — figure out what the instruction means
+  3. EXECUTE — carry out the instruction (add, compare, jump, etc.)
+
+This cycle repeats billions of times per second.
+A 3 GHz CPU does this ~3,000,000,000 times per second.
+
+MEMORY HIERARCHY
+----------------
+From fastest/smallest to slowest/largest:
+
+  Registers  │ Inside CPU  │ < 1 ns  │ ~1 KB
+  L1 Cache   │ Inside CPU  │ ~1 ns   │ ~64 KB
+  L2 Cache   │ Near CPU    │ ~5 ns   │ ~512 KB
+  L3 Cache   │ On chip     │ ~20 ns  │ ~8 MB
+  RAM        │ On board    │ ~100 ns │ 4–64 GB
+  SSD        │ Storage     │ ~0.1 ms │ 256 GB–2 TB
+  HDD        │ Storage     │ ~10 ms  │ 1–8 TB
+
+WHY THIS MATTERS FOR PROGRAMMING
+----------------------------------
+  - Accessing RAM is 100× slower than cache
+  - Accessing SSD is 1,000,000× slower than cache
+  - Loops that access the same data repeatedly are fast (cache hits)
+  - Random access patterns are slow (cache misses)
+
+  This is why sorting an array before searching it is faster —
+  sequential access patterns are cache-friendly.
+
+RAM (Random Access Memory)
+--------------------------
+  - Stores the OS, running programs, and their data
+  - Volatile — loses everything when power is off
+  - Each byte has an address (like a house number)
+  - Your Python variables live here while the program runs
+
+  When you write:
+    name = "Alice"
+  Python allocates space in RAM and stores "Alice" there.
+
+STORAGE (SSD/HDD)
+-----------------
+  - Non-volatile — keeps data when power is off
+  - Much slower than RAM
+  - Files, databases, and installed programs live here
+
+  When you write to a file in Python:
+    with open("data.txt", "w") as f:
+        f.write("hello")
+  You are moving data from RAM to storage.
+
+CORES AND THREADS
+-----------------
+  Core   — a complete CPU that can execute instructions independently
+  Thread — a sequence of instructions a core can run
+
+  A 4-core CPU can run 4 things truly simultaneously.
+  With hyperthreading, each core handles 2 threads → 8 threads total.
+
+  This is why your computer can play music while you code —
+  different cores handle different tasks.
+
+BITS AND BYTES
+--------------
+  1 bit   = 0 or 1
+  8 bits  = 1 byte
+  1024 bytes = 1 KB (kilobyte)
+  1024 KB    = 1 MB (megabyte)
+  1024 MB    = 1 GB (gigabyte)
+  1024 GB    = 1 TB (terabyte)
+
+  A char in Python takes ~50 bytes (due to Python's object overhead).
+  An integer takes ~28 bytes.
+  This is why C programs use less memory than Python programs.
+
+PRACTICE
+--------
+  1. Open Task Manager (Windows) or htop (Linux) on your computer
+  2. Find: how many CPU cores do you have?
+  3. Find: how much RAM is installed?
+  4. Find: which process is using the most CPU right now?
+  5. Open a Python script and run it — watch CPU usage spike briefly
+  6. Answer: why does RAM usage go up when you open more browser tabs?

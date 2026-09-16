@@ -1,0 +1,117 @@
+PYTHON SYNTAX & DATA TYPES
+==========================
+
+Python is one of the most readable programming languages.
+It reads almost like English — that's why it's the best first language.
+
+RUNNING PYTHON
+--------------
+  Option 1: Online — replit.com or python.org/shell
+  Option 2: Install Python from python.org, then run:
+              python3 script.py
+
+YOUR FIRST PROGRAM
+------------------
+  print("Muraho! Hello from Python!")
+
+  Output: Muraho! Hello from Python!
+
+VARIABLES
+---------
+No need to declare a type — Python figures it out:
+
+  name    = "Alice"        # String
+  age     = 17             # Integer
+  height  = 1.65           # Float
+  is_member = True         # Boolean
+
+STRINGS
+-------
+  greeting = "Muraho"
+  name     = "Alice"
+
+  # Joining strings (concatenation)
+  message = greeting + ", " + name + "!"
+  print(message)   # Muraho, Alice!
+
+  # f-strings (modern, preferred)
+  message = f"{greeting}, {name}!"
+  print(message)   # Muraho, Alice!
+
+  # Useful string methods
+  "hello".upper()        # "HELLO"
+  "HELLO".lower()        # "hello"
+  "  hello  ".strip()    # "hello"  (removes spaces)
+  "hello world".split()  # ["hello", "world"]
+  len("hello")           # 5
+
+NUMBERS
+-------
+  x = 10
+  y = 3
+
+  print(x + y)   # 13  addition
+  print(x - y)   # 7   subtraction
+  print(x * y)   # 30  multiplication
+  print(x / y)   # 3.333...  division (always float)
+  print(x // y)  # 3   integer division (floor)
+  print(x % y)   # 1   remainder (modulo)
+  print(x ** y)  # 1000  power (10³)
+
+LISTS
+-----
+  subjects = ["Math", "Python", "Web Dev"]
+  scores   = [85, 92, 78]
+
+  subjects[0]          # "Math"  (index from 0)
+  subjects[-1]         # "Web Dev"  (last item)
+  len(subjects)        # 3
+  subjects.append("Git")   # add to end
+  subjects[1] = "Python 3" # update item
+
+DICTIONARIES
+------------
+Key-value pairs — like a real dictionary:
+
+  student = {
+    "name": "Alice",
+    "age": 17,
+    "score": 92
+  }
+
+  student["name"]          # "Alice"
+  student["score"] = 95    # update
+  student["school"] = "RUNDA TSS"  # add new key
+
+BOOLEANS & COMPARISONS
+-----------------------
+  True  / False
+
+  5 > 3    # True
+  5 < 3    # False
+  5 == 5   # True  (equals — note double ==)
+  5 != 3   # True  (not equal)
+  5 >= 5   # True  (greater than or equal)
+
+  # Combining conditions
+  age = 17
+  is_member = True
+  age >= 16 and is_member   # True
+  age >= 18 or is_member    # True
+  not is_member             # False
+
+GETTING INPUT FROM THE USER
+----------------------------
+  name = input("What is your name? ")
+  print(f"Welcome, {name}!")
+
+  age = int(input("How old are you? "))   # input() always returns a string
+                                           # int() converts it to a number
+
+PRACTICE
+--------
+Write a program that:
+  1. Asks the user for their name and age
+  2. Stores them in variables
+  3. Prints: "Hello [name], you are [age] years old."
+  4. Prints whether they are old enough to vote (age >= 18)

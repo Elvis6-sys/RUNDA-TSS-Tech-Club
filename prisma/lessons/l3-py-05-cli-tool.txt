@@ -1,0 +1,134 @@
+BUILD A CLI TOOL
+================
+
+This is your capstone for the Python Programming track.
+You will build a real command-line application that solves a problem.
+
+WHAT IS A CLI TOOL?
+-------------------
+A CLI (Command Line Interface) tool runs in the terminal.
+No browser, no buttons — just text input and output.
+
+Examples of real CLI tools:
+  git       — version control
+  pip       — package installer
+  npm       — JavaScript package manager
+  prisma    — database toolkit (used in this project!)
+
+YOUR PROJECT: STUDENT GRADE TRACKER
+-------------------------------------
+Build a CLI app that:
+  1. Lets you add students with their scores
+  2. Saves data to a file (grades.json)
+  3. Shows a summary: average, highest, lowest score
+  4. Lets you search for a student by name
+
+STEP 1 — PROJECT STRUCTURE
+----------------------------
+  grade-tracker/
+    main.py
+    grades.json    (created automatically)
+
+STEP 2 — LOAD AND SAVE DATA
+-----------------------------
+Use JSON to store data — it's readable and easy to work with:
+
+  import json
+  import os
+
+  DATA_FILE = "grades.json"
+
+  def load_data():
+      if not os.path.exists(DATA_FILE):
+          return []
+      with open(DATA_FILE, "r") as f:
+          return json.load(f)
+
+  def save_data(students):
+      with open(DATA_FILE, "w") as f:
+          json.dump(students, f, indent=2)
+
+STEP 3 — CORE FUNCTIONS
+------------------------
+  def add_student(students):
+      name  = input("Student name: ").strip()
+      score = int(input("Score (0-100): "))
+      students.append({"name": name, "score": score})
+      save_data(students)
+      print(f"  ✓ {name} added.")
+
+  def show_summary(students):
+      if not students:
+          print("No students yet.")
+          return
+      scores = [s["score"] for s in students]
+      print(f"\n  Total students : {len(students)}")
+      print(f"  Average score  : {sum(scores)/len(scores):.1f}")
+      print(f"  Highest score  : {max(scores)}")
+      print(f"  Lowest score   : {min(scores)}")
+      print()
+      for s in sorted(students, key=lambda x: x["score"], reverse=True):
+          bar = "█" * (s["score"] // 10)
+          print(f"  {s['name']:<15} {s['score']:>3}  {bar}")
+
+  def search_student(students):
+      query = input("Search name: ").strip().lower()
+      results = [s for s in students if query in s["name"].lower()]
+      if not results:
+          print("No match found.")
+      for s in results:
+          print(f"  {s['name']}: {s['score']}")
+
+STEP 4 — MAIN MENU LOOP
+------------------------
+  def main():
+      students = load_data()
+
+      while True:
+          print("\n── Grade Tracker ──────────────")
+          print("  1. Add student")
+          print("  2. Show summary")
+          print("  3. Search student")
+          print("  4. Quit")
+          choice = input("\nChoice: ").strip()
+
+          if choice == "1":
+              add_student(students)
+          elif choice == "2":
+              show_summary(students)
+          elif choice == "3":
+              search_student(students)
+          elif choice == "4":
+              print("Goodbye!")
+              break
+          else:
+              print("Invalid choice. Try again.")
+
+  if __name__ == "__main__":
+      main()
+
+STEP 5 — RUN IT
+---------------
+  python3 main.py
+
+EXTENSIONS (BONUS)
+------------------
+  - Add a "delete student" option
+  - Add subject field (not just one score)
+  - Export a report to a .txt file
+  - Add colour using the colorama library (pip install colorama)
+
+CHECKLIST BEFORE SUBMITTING
+-----------------------------
+  ✓ App runs without errors
+  ✓ Data persists between runs (saved to grades.json)
+  ✓ All 4 menu options work
+  ✓ Invalid input is handled gracefully (no crashes)
+  ✓ Code is split into functions (no giant main block)
+  ✓ Pushed to GitHub with at least 3 commits
+
+PRACTICE
+--------
+Build the Grade Tracker above, then extend it with one bonus feature.
+Share your GitHub link in the #projects channel.
+This is your Python track capstone for the Competency Passport.

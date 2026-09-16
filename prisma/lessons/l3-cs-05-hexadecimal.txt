@@ -1,0 +1,124 @@
+HEXADECIMAL & NUMBER SYSTEMS
+============================
+
+You know binary (base 2) and decimal (base 10).
+Hexadecimal (base 16) is the third system every developer must know.
+
+WHY HEXADECIMAL?
+----------------
+Binary is hard to read for humans — 11111111 is just one byte.
+Hexadecimal is a compact way to write binary that humans can read.
+
+  Binary:      1111 1111
+  Decimal:     255
+  Hexadecimal: FF
+
+One hex digit = exactly 4 binary digits (a nibble).
+Two hex digits = exactly 8 binary digits (one byte).
+
+THE 16 HEX DIGITS
+-----------------
+Hex uses digits 0-9 then letters A-F:
+
+  Decimal  Binary  Hex
+  0        0000    0
+  1        0001    1
+  2        0010    2
+  3        0011    3
+  4        0100    4
+  5        0101    5
+  6        0110    6
+  7        0111    7
+  8        1000    8
+  9        1001    9
+  10       1010    A
+  11       1011    B
+  12       1100    C
+  13       1101    D
+  14       1110    E
+  15       1111    F
+
+Hex numbers are written with a 0x prefix: 0xFF, 0x1A, 0x3F
+
+CONVERTING HEX TO DECIMAL
+--------------------------
+Each position is a power of 16.
+
+  0x2B
+  = 2 × 16¹  +  B × 16⁰
+  = 2 × 16   +  11 × 1
+  = 32 + 11
+  = 43
+
+  0xFF
+  = 15 × 16  +  15 × 1
+  = 240 + 15
+  = 255
+
+CONVERTING BINARY TO HEX
+-------------------------
+Group binary digits in sets of 4 from the right, convert each group:
+
+  Binary: 1010 1100
+          ↓    ↓
+  Hex:    A    C    →  0xAC
+
+  Binary: 0011 1111
+          ↓    ↓
+  Hex:    3    F    →  0x3F
+
+WHERE YOU SEE HEX IN REAL LIFE
+--------------------------------
+  Colours in CSS:
+    #FF0000  = red    (R=255, G=0,   B=0)
+    #00FF00  = green  (R=0,   G=255, B=0)
+    #0F172A  = dark background used in this project
+    #38BDF8  = sky blue used in this project
+
+  Memory addresses:
+    0x7fff5fbff8a0  — a RAM address in a running program
+
+  SHA-256 hashes (blockchain):
+    2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+
+  MAC addresses (network hardware):
+    00:1A:2B:3C:4D:5E
+
+PYTHON CONVERSIONS
+------------------
+  # Decimal to hex
+  hex(255)      # '0xff'
+  hex(43)       # '0x2b'
+
+  # Hex to decimal
+  int("FF", 16)   # 255
+  int("2b", 16)   # 43
+
+  # Decimal to binary
+  bin(13)       # '0b1101'
+
+  # Binary to decimal
+  int("1101", 2)  # 13
+
+  # All at once
+  n = 255
+  print(f"Decimal: {n}")
+  print(f"Binary:  {bin(n)}")
+  print(f"Hex:     {hex(n)}")
+
+SUMMARY OF ALL THREE SYSTEMS
+------------------------------
+  Base    Name         Digits    Prefix
+  2       Binary       0,1       0b
+  10      Decimal      0-9       (none)
+  16      Hexadecimal  0-9,A-F   0x
+
+PRACTICE
+--------
+  1. Convert 0xAF to decimal (show your working)
+  2. Convert decimal 200 to hex (show your working)
+  3. Convert binary 11001010 to hex (group into nibbles)
+  4. What colour is #FF8800 in CSS? (R=?, G=?, B=?)
+  5. In Python, write a function hex_to_rgb(hex_str) that takes
+     a string like "FF8800" and returns a tuple (255, 136, 0)
+     Hint: split into pairs, use int(pair, 16) for each

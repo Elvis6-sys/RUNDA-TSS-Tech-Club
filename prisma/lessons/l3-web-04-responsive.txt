@@ -1,0 +1,100 @@
+RESPONSIVE DESIGN
+=================
+
+A responsive website looks good on ALL screen sizes —
+phone, tablet, and desktop.
+
+WHY IT MATTERS
+--------------
+In Rwanda, most students browse on mobile phones.
+If your site only works on desktop, you lose most of your users.
+
+THE VIEWPORT META TAG
+---------------------
+Always include this in your <head> — without it, mobile browsers
+zoom out and make everything tiny:
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+MEDIA QUERIES
+-------------
+Media queries apply CSS only when a condition is true (e.g. screen width).
+
+  /* Default: mobile first */
+  .card {
+    width: 100%;
+    padding: 12px;
+  }
+
+  /* Tablet and above (768px+) */
+  @media (min-width: 768px) {
+    .card {
+      width: 48%;
+    }
+  }
+
+  /* Desktop (1024px+) */
+  @media (min-width: 1024px) {
+    .card {
+      width: 30%;
+    }
+  }
+
+MOBILE-FIRST APPROACH
+---------------------
+Write CSS for mobile FIRST, then add media queries for larger screens.
+This is better than the reverse because:
+  - Mobile is the most constrained — solve the hard problem first
+  - Adding features for larger screens is easier than removing them
+
+RESPONSIVE FLEXBOX
+------------------
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .grid-item {
+    flex: 1 1 280px;   /* minimum 280px, then grow to fill space */
+  }
+
+  On mobile:  items stack vertically (each takes full width)
+  On desktop: items sit side by side (each at least 280px wide)
+
+RESPONSIVE IMAGES
+-----------------
+  img {
+    max-width: 100%;   /* never wider than its container */
+    height: auto;      /* keep aspect ratio */
+  }
+
+RESPONSIVE TYPOGRAPHY
+---------------------
+Use relative units instead of fixed px:
+
+  body {
+    font-size: 16px;   /* base size */
+  }
+
+  h1 { font-size: 2rem; }    /* 2 × 16px = 32px */
+  p  { font-size: 1rem; }    /* 1 × 16px = 16px */
+
+  rem = relative to the root (html) font size
+  em  = relative to the parent element's font size
+
+TESTING RESPONSIVENESS
+----------------------
+In Chrome or Firefox:
+  1. Press F12 to open DevTools
+  2. Click the phone/tablet icon (Toggle Device Toolbar)
+  3. Select different device sizes from the dropdown
+  4. Resize the window to see breakpoints in action
+
+PRACTICE
+--------
+Take your page from the CSS lesson and make it responsive:
+  1. On mobile: nav links stack vertically
+  2. On tablet (768px+): nav links sit in a row
+  3. On desktop (1024px+): content has a max-width of 960px and is centred
+  4. Test it in DevTools at 375px (iPhone), 768px (iPad), 1280px (desktop)
