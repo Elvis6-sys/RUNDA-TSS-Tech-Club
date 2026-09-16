@@ -1,0 +1,62 @@
+{
+  "nav": {
+    "dashboard": "Imbonerahamwe",
+    "challenges": "Ibibazo",
+    "passport": "Indangamuntu",
+    "lessons": "Amasomo",
+    "verify": "Emeza",
+    "progress": "Iterambere",
+    "projects": "Imishinga",
+    "resources": "Ibikoresho",
+    "events": "Ibikorwa",
+    "chat": "Ikiganiro",
+    "admin": "Ubuyobozi",
+    "signOut": "Sohoka"
+  },
+  "dashboard": {
+    "greeting_morning": "Mwaramutse",
+    "greeting_afternoon": "Mwiriwe",
+    "greeting_evening": "Mwiriwe",
+    "continue_learning": "Komeza kwiga",
+    "start_learning": "Tangira kwiga",
+    "no_lesson_yet": "Ntabwo watangiye isomo iryo ariryo ryose.",
+    "browse_lessons": "Reba amasomo",
+    "progress_summary": "Ugeze kuri {pct}% muri {subject} — {remaining} {remaining, plural, one {igice} other {ibice}} bisigaye.",
+    "streak_active": "🔥 Iminsi {days} ikurikiranye — komeza!",
+    "streak_zero": "Tangira uyu munsi — fungura isomo.",
+    "streak_longest": "Iminsi myinshi ikurikiranye: {days}.",
+    "upcoming_events": "Ibikorwa bizaza",
+    "no_events": "Nta bikorwa bizaza.",
+    "level_badge": "Urwego {level}",
+    "xp_label": "{xp} XP"
+  },
+  "admin": {
+    "pending_applications": "Ibyifuzo bitegereje",
+    "no_pending": "Nta byifuzo bitegereje isuzuma.",
+    "review": "Suzuma",
+    "club_stats": "Imibare y'ikigo",
+    "total_members": "Abanyamuryango bose",
+    "active_this_week": "Bakora iki cyumweru",
+    "lessons_completed": "Amasomo arangiye"
+  },
+  "lessons": {
+    "title": "Amasomo",
+    "search_placeholder": "Shakisha amasomo cyangwa inzego…",
+    "offline_cache": "📦 Nta internet — werekana ibikodeshejwe",
+    "offline_banner": "📵 Nta internet — amasomo avuye mu bubiko bw'igikoresho cyawe",
+    "back": "← Subira ku masomo",
+    "last_updated": "Ivugururwa rya nyuma: {date}",
+    "continue_reading": "Komeza gusoma",
+    "back_to_lessons": "Subira ku masomo"
+  },
+  "common": {
+    "online": "Ufite internet",
+    "offline": "Nta internet",
+    "loading": "Gutegereza…",
+    "error": "Habaye ikibazo.",
+    "retry": "Gerageza nanone",
+    "save": "Bika",
+    "cancel": "Reka",
+    "close": "Funga"
+  }
+}

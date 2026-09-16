@@ -1,0 +1,168 @@
+/**
+ * Sync Client for Tauri App
+ * Provides sync control and status monitoring
+ */
+
+import { invoke } from '@tauri-apps/api/tauri';
+import { isTauriApp } from './offlineStorage';
+
+export interface SyncStats {
+  total_synced: number;
+  total_failed: number;
+  last_sync_time: string | null;
+  is_syncing: boolean;
+}
+
+/**
+ * Start the background sync engine
+ */
+export async function startSyncEngine(): Promise<void> {
+  if (!isTauriApp()) {
+    throw new Error('Sync engine only available in Tauri app');
+  }
+
+  try {
+    await invoke('start_sync_engine');
+    console.log('✅ Sync engine started');
+  } catch (error) {
+    console.error('❌ Failed to start sync engine:', error);
+    throw error;
+  }
+}
+
+/**
+ * Stop the background sync engine
+ */
+export async function stopSyncEngine(): Promise<void> {
+  if (!isTauriApp()) {
+    throw new Error('Sync engine only available in Tauri app');
+  }
+
+  try {
+    await invoke('stop_sync_engine');
+    console.log('⏹️  Sync engine stopped');
+  } catch (error) {
+    console.error('❌ Failed to stop sync engine:', error);
+    throw error;
+  }
+}
+
+/**
+ * Trigger immediate sync
+ */
+export async function syncNow(): Promise<number> {
+  if (!isTauriApp()) {
+    throw new Error('Sync only available in Tauri app');
+  }
+
+  try {
+    const count = await invoke<number>('sync_now');
+    console.log(`✅ Synced ${count} items`);
+    return count;
+  } catch (error) {
+    console.error('❌ Sync failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get sync statistics
+ */
+export async function getSyncStats(): Promise<SyncStats> {
+  if (!isTauriApp()) {
+    return {
+      total_synced: 0,
+      total_failed: 0,
+      last_sync_time: null,
+      is_syncing: false,
+    };
+  }
+
+  try {
+    const stats = await invoke<SyncStats>('get_sync_stats');
+    return stats;
+  } catch (error) {
+    console.error('Failed to get sync stats:', error);
+    return {
+      total_synced: 0,
+      total_failed: 0,
+      last_sync_time: null,
+      is_syncing: false,
+    };
+  }
+}
+
+/**
+ * Set sync interval (in seconds)
+ */
+export async function setSyncInterval(seconds: number): Promise<void> {
+  if (!isTauriApp()) {
+    throw new Error('Sync configuration only available in Tauri app');
+  }
+
+  try {
+    await invoke('set_sync_interval', { seconds });
+    console.log(`✅ Sync interval set to ${seconds} seconds`);
+  } catch (error) {
+    console.error('❌ Failed to set sync interval:', error);
+    throw error;
+  }
+}
+
+/**
+ * Format last sync time for display
+ */
+export function formatLastSync(timestamp: string | null): string {
+  if (!timestamp) return 'Never';
+
+  try {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+    return date.toLocaleDateString();
+  } catch {
+    return 'Unknown';
+  }
+}
+
+/**
+ * Get sync status color
+ */
+export function getSyncStatusColor(stats: SyncStats): 'green' | 'yellow' | 'red' | 'gray' {
+  if (stats.is_syncing) return 'yellow';
+  if (stats.total_failed > 0) return 'red';
+  if (stats.total_synced > 0) return 'green';
+  return 'gray';
+}
+
+/**
+ * Get sync status message
+ */
+export function getSyncStatusMessage(stats: SyncStats): string {
+  if (stats.is_syncing) return 'Syncing...';
+  if (stats.total_failed > 0) return `${stats.total_failed} failed`;
+  if (stats.total_synced > 0) return `${stats.total_synced} synced`;
+  return 'Not synced yet';
+}
+
+/**
+ * Export for debugging
+ */
+if (typeof window !== 'undefined') {
+  (window as any).__syncClient = {
+    startSyncEngine,
+    stopSyncEngine,
+    syncNow,
+    getSyncStats,
+    setSyncInterval,
+  };
+}

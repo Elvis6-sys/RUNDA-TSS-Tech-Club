@@ -1,0 +1,232 @@
+/**
+ * Offline Storage Client for Tauri App
+ * Provides offline-first quiz submission and user data caching
+ */
+
+import { invoke } from '@tauri-apps/api/tauri';
+
+export interface LocalUser {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  offline_password_hash: string | null;
+  cached_at: string | null;
+}
+
+export interface QuizSubmission {
+  id: string;
+  user_id: string;
+  node_id: string;
+  block_id: string;
+  quiz_id: string;
+  answers: string; // JSON stringified
+  submitted_at: string;
+  synced: boolean;
+  server_id: string | null;
+}
+
+export interface DatabaseStats {
+  users: number;
+  submissions: number;
+  unsynced: number;
+}
+
+/**
+ * Check if running inside Tauri app
+ */
+export function isTauriApp(): boolean {
+  return typeof window !== 'undefined' && '__TAURI__' in window;
+}
+
+/**
+ * Save quiz submission offline (Tauri only)
+ */
+export async function saveQuizOffline(
+  userId: string,
+  nodeId: string,
+  blockId: string,
+  quizId: string,
+  answers: Record<string, any>
+): Promise<string> {
+  if (!isTauriApp()) {
+    throw new Error('Offline storage only available in Tauri app');
+  }
+
+  const answersJson = JSON.stringify(answers);
+
+  try {
+    const submissionId = await invoke<string>('save_quiz_offline', {
+      userId,
+      nodeId,
+      blockId,
+      quizId,
+      answers: answersJson,
+    });
+
+    console.log('✅ Quiz saved offline:', submissionId);
+    return submissionId;
+  } catch (error) {
+    console.error('❌ Failed to save quiz offline:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get count of unsynced items
+ */
+export async function getUnsyncedCount(): Promise<number> {
+  if (!isTauriApp()) return 0;
+
+  try {
+    const count = await invoke<number>('get_unsynced_count');
+    return count;
+  } catch (error) {
+    console.error('Failed to get unsynced count:', error);
+    return 0;
+  }
+}
+
+/**
+ * Get user's quiz submissions from offline storage
+ */
+export async function getUserSubmissionsOffline(userId: string): Promise<QuizSubmission[]> {
+  if (!isTauriApp()) {
+    return [];
+  }
+
+  try {
+    const submissions = await invoke<QuizSubmission[]>('get_user_submissions_offline', {
+      userId,
+    });
+    return submissions;
+  } catch (error) {
+    console.error('Failed to get offline submissions:', error);
+    return [];
+  }
+}
+
+/**
+ * Cache user data offline for offline authentication
+ */
+export async function saveUserOffline(user: LocalUser): Promise<void> {
+  if (!isTauriApp()) return;
+
+  try {
+    await invoke('save_user_offline', { user });
+    console.log('✅ User cached offline:', user.email);
+  } catch (error) {
+    console.error('Failed to save user offline:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get cached user by email (for offline login)
+ */
+export async function getUserOffline(email: string): Promise<LocalUser | null> {
+  if (!isTauriApp()) return null;
+
+  try {
+    const user = await invoke<LocalUser | null>('get_user_offline', { email });
+    return user;
+  } catch (error) {
+    console.error('Failed to get offline user:', error);
+    return null;
+  }
+}
+
+/**
+ * Get database statistics
+ */
+export async function getDatabaseStats(): Promise<DatabaseStats> {
+  if (!isTauriApp()) {
+    return { users: 0, submissions: 0, unsynced: 0 };
+  }
+
+  try {
+    const stats = await invoke<[number, number, number]>('get_database_stats');
+    return {
+      users: stats[0],
+      submissions: stats[1],
+      unsynced: stats[2],
+    };
+  } catch (error) {
+    console.error('Failed to get database stats:', error);
+    return { users: 0, submissions: 0, unsynced: 0 };
+  }
+}
+
+/**
+ * Hook: Auto-save quiz submissions offline when in Tauri app
+ * Use this in your quiz submission form
+ */
+export async function submitQuizWithOfflineSupport(
+  userId: string,
+  nodeId: string,
+  blockId: string,
+  quizId: string,
+  answers: Record<string, any>,
+  onlineSubmitFn: () => Promise<any>
+): Promise<{ success: boolean; offlineMode: boolean; submissionId?: string }> {
+  // Try online submission first
+  if (navigator.onLine) {
+    try {
+      const result = await onlineSubmitFn();
+      console.log('✅ Quiz submitted online');
+      return { success: true, offlineMode: false, submissionId: result.id };
+    } catch (error) {
+      console.warn('⚠️ Online submission failed, trying offline...', error);
+    }
+  }
+
+  // Fallback to offline if in Tauri
+  if (isTauriApp()) {
+    try {
+      const offlineId = await saveQuizOffline(userId, nodeId, blockId, quizId, answers);
+      console.log('💾 Quiz saved offline, will sync later');
+      return { success: true, offlineMode: true, submissionId: offlineId };
+    } catch (error) {
+      console.error('❌ Offline save also failed:', error);
+      return { success: false, offlineMode: true };
+    }
+  }
+
+  // Both failed and not in Tauri
+  return { success: false, offlineMode: false };
+}
+
+/**
+ * Display sync status badge (for UI)
+ */
+export async function getSyncStatusBadge(): Promise<{
+  count: number;
+  message: string;
+  color: 'green' | 'yellow' | 'red';
+}> {
+  if (!isTauriApp()) {
+    return { count: 0, message: 'Online Mode', color: 'green' };
+  }
+
+  const unsyncedCount = await getUnsyncedCount();
+
+  if (unsyncedCount === 0) {
+    return { count: 0, message: 'All synced', color: 'green' };
+  } else if (unsyncedCount <= 5) {
+    return { count: unsyncedCount, message: `${unsyncedCount} pending sync`, color: 'yellow' };
+  } else {
+    return { count: unsyncedCount, message: `${unsyncedCount} pending sync`, color: 'red' };
+  }
+}
+
+/**
+ * Export for debugging in browser console
+ */
+if (typeof window !== 'undefined') {
+  (window as any).__offlineStorage = {
+    isTauriApp,
+    getUnsyncedCount,
+    getDatabaseStats,
+    getSyncStatusBadge,
+  };
+}

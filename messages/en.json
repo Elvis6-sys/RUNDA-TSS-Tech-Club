@@ -1,0 +1,62 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "challenges": "Challenges",
+    "passport": "Lessons",
+    "lessons": "Lessons",
+    "verify": "Verify",
+    "progress": "Progress",
+    "projects": "Projects",
+    "resources": "Resources",
+    "events": "Events",
+    "chat": "Chat",
+    "admin": "Admin",
+    "signOut": "Sign out"
+  },
+  "dashboard": {
+    "greeting_morning": "Good morning",
+    "greeting_afternoon": "Good afternoon",
+    "greeting_evening": "Good evening",
+    "continue_learning": "Continue learning",
+    "start_learning": "Start learning",
+    "no_lesson_yet": "You haven't started any lessons yet.",
+    "browse_lessons": "Browse lessons",
+    "progress_summary": "You're {pct}% through {subject} — {remaining} {remaining, plural, one {section} other {sections}} left.",
+    "streak_active": "🔥 {days} {days, plural, one {day} other {days}} streak — keep it going!",
+    "streak_zero": "Start your streak today — open a lesson.",
+    "streak_longest": "Your longest streak: {days} {days, plural, one {day} other {days}}.",
+    "upcoming_events": "Upcoming events",
+    "no_events": "No upcoming events.",
+    "level_badge": "Level {level}",
+    "xp_label": "{xp} XP"
+  },
+  "admin": {
+    "pending_applications": "Pending applications",
+    "no_pending": "No applications waiting for review.",
+    "review": "Review",
+    "club_stats": "Club stats",
+    "total_members": "Total members",
+    "active_this_week": "Active this week",
+    "lessons_completed": "Lessons completed"
+  },
+  "lessons": {
+    "title": "Lessons",
+    "search_placeholder": "Search lessons or subjects…",
+    "offline_cache": "📦 Offline — showing cached content",
+    "offline_banner": "📵 You are offline — lessons loaded from your device cache",
+    "back": "← Back to lessons",
+    "last_updated": "Last updated {date}",
+    "continue_reading": "Continue reading",
+    "back_to_lessons": "Back to lessons"
+  },
+  "common": {
+    "online": "Online",
+    "offline": "Offline",
+    "loading": "Loading…",
+    "error": "Something went wrong.",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close"
+  }
+}
