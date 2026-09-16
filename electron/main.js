@@ -132,12 +132,28 @@ try {
 // ═══════════════════════════════════════════════════════════════════════════
 // OS-SPECIFIC LOCKDOWN MODULES
 // ═══════════════════════════════════════════════════════════════════════════
-const windowsLockdown = process.platform === 'win32' ? require('./windows-lockdown') : null;
-const linuxLockdown = process.platform === 'linux' ? require('./linux-lockdown') : null;
+let windowsLockdown = null;
+let linuxLockdown = null;
+
+try {
+  if (process.platform === 'win32') {
+    windowsLockdown = require('./windows-lockdown');
+    console.log('✅ Windows lockdown module loaded');
+  }
+} catch (err) {
+  logError('windows-lockdown import', err);
+}
+
+try {
+  if (process.platform === 'linux') {
+    linuxLockdown = require('./linux-lockdown');
+    console.log('✅ Linux lockdown module loaded');
+  }
+} catch (err) {
+  logError('linux-lockdown import', err);
+}
 
 console.log(`🖥️  [LOCKDOWN] Platform: ${process.platform}`);
-if (windowsLockdown) console.log('   ✓ Windows lockdown module loaded');
-if (linuxLockdown) console.log('   ✓ Linux lockdown module loaded');
 if (!windowsLockdown && !linuxLockdown && process.platform === 'darwin') {
   console.log('   ℹ️  macOS: Using Electron kiosk mode only (no OS lockdown needed)');
 }
@@ -177,9 +193,17 @@ app.on('second-instance', (event, commandLine, workingDirectory) => {
   }
 });
 
-// CRITICAL: Suppress ALL Electron error dialogs (prevents freeze-causing popups)
-dialog.showErrorBox = () => {
-  console.error('🚨 [SUPPRESSED] Error dialog blocked to prevent fullscreen freeze');
+// Store original showErrorBox for startup errors (will suppress AFTER initialization)
+const originalShowErrorBox = dialog.showErrorBox.bind(dialog);
+let errorDialogsEnabled = true;
+
+// Custom showErrorBox that can be disabled after startup
+dialog.showErrorBox = (title, content) => {
+  if (errorDialogsEnabled) {
+    originalShowErrorBox(title, content);
+  } else {
+    console.error(`🚨 [SUPPRESSED] Error dialog blocked: ${title}`);
+  }
 };
 
 let mainWindow = null;
@@ -523,19 +547,24 @@ function startNextServer() {
         // Detect if we're in production (packaged app) or development
         const isPackaged = app.isPackaged;
 
-        // VALIDATE BEFORE STARTING
-        const validation = validateStartup(isPackaged, process.resourcesPath);
-        if (!validation.valid) {
-          console.error('❌ [VALIDATOR] Startup validation FAILED!');
-          console.error('   Errors:', validation.errors);
-          // Show error dialog to user
-          const { dialog } = require('electron');
-          dialog.showErrorBox(
-            'Startup Error',
-            'Failed to start application:\n\n' + validation.errors.join('\n')
-          );
-          app.quit();
-          return;
+        // VALIDATE BEFORE STARTING (only if validator is available)
+        if (validateStartup) {
+          const validation = validateStartup(isPackaged, process.resourcesPath);
+          if (!validation.valid) {
+            console.error('❌ [VALIDATOR] Startup validation FAILED!');
+            console.error('   Errors:', validation.errors);
+            // Show error dialog to user
+            const { dialog } = require('electron');
+            dialog.showErrorBox(
+              'Startup Error',
+              'Failed to start application:\n\n' + validation.errors.join('\n')
+            );
+            reject(new Error('Startup validation failed: ' + validation.errors.join(', ')));
+            return;
+          }
+          console.log('✅ [VALIDATOR] Startup validation passed');
+        } else {
+          console.warn('⚠️ [VALIDATOR] Startup validator not available - skipping validation');
         }
 
         console.log(`📦 isPackaged: ${isPackaged}`);
@@ -2384,6 +2413,10 @@ app.whenReady().then(async () => {
     console.log('🪟 [WINDOW] Creating main window...');
     createWindow();
     console.log('✅ [WINDOW] Main window created');
+
+    // Initialization complete - now suppress error dialogs to prevent fullscreen freeze
+    errorDialogsEnabled = false;
+    console.log('✅ [INIT] Complete - error dialogs now suppressed');
   } catch (err) {
     logError('WINDOW creation', err);
     dialog.showErrorBox(
