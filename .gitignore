@@ -1,0 +1,86 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Electron build output
+dist-electron/
+build-temp/
+
+# Environment variables
+.env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+*.db
+*.sqlite
+*.sql
+prisma/migrations/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+.vs/
+
+# Tauri
+runda-secure-exam/src-tauri/target/
+runda-secure-exam/src-tauri/WixTools/
+runda-secure-exam/node_modules/
+
+# Build artifacts - ALL installers should NOT be in Git
+*.tar.gz
+*.zip
+*.deb
+*.AppImage
+*.dmg
+*.msi
+*.exe
+*.rpm
+RUNDA-TSS-Installer.exe
+runda-tss-platform*.deb
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Testing
+coverage/
+.nyc_output/
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Local configuration
+.local/

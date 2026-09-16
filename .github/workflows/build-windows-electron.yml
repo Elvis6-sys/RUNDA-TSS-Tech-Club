@@ -1,0 +1,357 @@
+name: Build Windows Electron Installer
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 PURPOSE: Build Windows .exe installer on REAL Windows machine
+# ═══════════════════════════════════════════════════════════════════════════
+# This workflow solves the cross-compilation failure we've been stuck on by:
+# 1. Running on actual Windows Server (not Wine emulation)
+# 2. Using native Windows build tools
+# 3. Proper canvas module compilation
+# 4. Standard NSIS installer creation
+#
+# Result: Working Windows installer that students can actually use!
+# ═══════════════════════════════════════════════════════════════════════════
+
+on:
+  # Trigger on push to main branch
+  push:
+    branches:
+      - main
+    paths:
+      - 'electron/**'
+      - 'app/**'
+      - 'components/**'
+      - 'lib/**'
+      - 'public/**'
+      - 'prisma/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'electron-builder.yml'
+      - '.github/workflows/build-windows-electron.yml'
+
+  # Trigger on version tags
+  push:
+    tags:
+      - 'v*.*.*'
+
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip test build (build full installer)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-windows:
+    name: Build Windows Installer (Electron)
+    runs-on: windows-latest  # Use latest Windows Server
+
+    steps:
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 1: CHECKOUT CODE
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for version tagging
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 2: SETUP NODE.JS
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 📦 Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: ✅ Verify Node.js installation
+        run: |
+          node --version
+          npm --version
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 3: SETUP PYTHON (Required for node-gyp)
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 🐍 Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: ✅ Verify Python installation
+        run: python --version
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 4: SETUP VISUAL STUDIO BUILD TOOLS
+      # ═══════════════════════════════════════════════════════════════════════
+      # GitHub Actions Windows runners already have VS Build Tools installed
+      # But we verify and ensure MSBuild is available
+      - name: 🔧 Setup MSBuild (Visual Studio Build Tools)
+        uses: microsoft/setup-msbuild@v2
+
+      - name: ✅ Verify MSBuild
+        run: msbuild -version
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 5: INSTALL DEPENDENCIES
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 📚 Install npm dependencies
+        run: npm ci
+        env:
+          # Increase Node.js memory for large dependency install
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: ✅ Verify critical modules
+        run: |
+          echo "Checking canvas module..."
+          npm list canvas || echo "Canvas not found (will be built)"
+          echo "Checking electron..."
+          npm list electron
+          echo "Checking electron-builder..."
+          npm list electron-builder
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 6: GENERATE PRISMA CLIENT
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+
+      - name: ✅ Verify Prisma Client
+        run: |
+          if (Test-Path "node_modules\.prisma\client") {
+            Write-Host "✅ Prisma Client generated successfully"
+          } else {
+            Write-Host "❌ Prisma Client generation failed"
+            exit 1
+          }
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 7: BUILD NEXT.JS APPLICATION
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 🏗️ Build Next.js app
+        run: npm run build
+        env:
+          NODE_ENV: production
+          # Increase memory for build
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: ✅ Verify Next.js build
+        run: |
+          if (Test-Path ".next\standalone") {
+            Write-Host "✅ Next.js standalone build created"
+          } else {
+            Write-Host "❌ Next.js standalone build missing"
+            exit 1
+          }
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 8: BUILD ELECTRON INSTALLER
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 🎯 Build Windows Installer (.exe)
+        run: npm run electron:build:win
+        env:
+          # GitHub Actions specific settings
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Increase memory for electron-builder
+          NODE_OPTIONS: --max-old-space-size=4096
+          # Electron builder settings
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 9: VERIFY INSTALLER WAS CREATED
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: ✅ Verify installer creation
+        run: |
+          Write-Host "Checking dist-electron directory..."
+          if (Test-Path "dist-electron") {
+            Get-ChildItem -Path "dist-electron" -Filter "*.exe" -Recurse | ForEach-Object {
+              $size = [math]::Round($_.Length / 1MB, 2)
+              Write-Host "✅ Found installer: $($_.Name) ($size MB)"
+            }
+            
+            # Check if any .exe files exist
+            $exeFiles = Get-ChildItem -Path "dist-electron" -Filter "*.exe" -Recurse
+            if ($exeFiles.Count -eq 0) {
+              Write-Host "❌ No .exe installer found!"
+              exit 1
+            }
+          } else {
+            Write-Host "❌ dist-electron directory not found!"
+            exit 1
+          }
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 10: UPLOAD INSTALLER AS ARTIFACT
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 📤 Upload Windows Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            dist-electron/*.exe
+            dist-electron/*.exe.blockmap
+          if-no-files-found: error
+          retention-days: 30
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 11: UPLOAD BUILD LOGS (For debugging if build fails)
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 📋 Upload build logs
+        if: always()  # Upload even if build fails
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            npm-debug.log*
+            yarn-error.log*
+            lerna-debug.log*
+            .next/
+            dist-electron/builder-debug.yml
+            dist-electron/builder-effective-config.yaml
+          if-no-files-found: warn
+          retention-days: 7
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 12: CREATE RELEASE (Only on tag push)
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 🚀 Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist-electron/*.exe
+          body: |
+            ## 🎓 RUNDA TSS Exam System - Windows Installer
+            
+            ### ✅ For Windows Students (Windows 10/11)
+            
+            **Download**: `RUNDA TSS Exam System-${{ github.ref_name }}-Setup.exe`
+            
+            **Installation Steps**:
+            1. Download the installer above
+            2. Double-click the `.exe` file
+            3. Follow the installation wizard (Next → Next → Install)
+            4. Launch from desktop shortcut or Start Menu
+            
+            **First Launch**: Takes 30-60 seconds (database initialization)
+            
+            ---
+            
+            ### 📦 What's Included
+            
+            - ✅ **Fully Offline** (no internet needed)
+            - ✅ **SQLite Database** (bundled)
+            - ✅ **PDF Viewer** (all PDFs work)
+            - ✅ **Anti-Cheat System** (exam security)
+            - ✅ **Quiz System** (with bug fixes)
+            - ✅ **User Management** (admin/teacher/student roles)
+            
+            ---
+            
+            ### 🔧 System Requirements
+            
+            - **OS**: Windows 10 (64-bit) or Windows 11
+            - **RAM**: 4GB minimum, 8GB recommended
+            - **Disk Space**: 1.5GB free space
+            - **Screen**: 1280x720 minimum resolution
+            
+            ---
+            
+            ### 🐛 Bug Fixes in This Release
+            
+            - ✅ Fixed quiz freezing after 2-3 questions
+            - ✅ Fixed DevTools security vulnerability
+            - ✅ Fixed Windows port cleanup crash
+            - ✅ Improved cross-platform compatibility
+            
+            ---
+            
+            ### 📞 Support
+            
+            **Installation Issues?**
+            - Check Windows Defender didn't block the installer
+            - Run as Administrator if needed
+            - Ensure antivirus allows the app
+            
+            **Login Credentials**:
+            - **Admin**: `leotuyi10@gmail.com` / `12345678`
+            - **Trainer**: `leotuyi100@gmail.com` / `12345678`
+            
+            ---
+            
+            **Built on**: Native Windows Server (GitHub Actions)
+            **Build Date**: ${{ github.event.head_commit.timestamp }}
+            **Commit**: ${{ github.sha }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # STEP 13: POST-BUILD SUMMARY
+      # ═══════════════════════════════════════════════════════════════════════
+      - name: 📊 Build Summary
+        if: success()
+        run: |
+          Write-Host "════════════════════════════════════════════════════════"
+          Write-Host "✅ WINDOWS BUILD SUCCESSFUL!"
+          Write-Host "════════════════════════════════════════════════════════"
+          Write-Host ""
+          Write-Host "📦 Installer created in: dist-electron/"
+          Write-Host ""
+          Get-ChildItem -Path "dist-electron" -Filter "*.exe" | ForEach-Object {
+            $size = [math]::Round($_.Length / 1MB, 2)
+            Write-Host "   📁 $($_.Name)"
+            Write-Host "   📊 Size: $size MB"
+            Write-Host ""
+          }
+          Write-Host "🎯 Next steps:"
+          Write-Host "   1. Download installer from Artifacts"
+          Write-Host "   2. Test on Windows 10/11"
+          Write-Host "   3. Distribute to students"
+          Write-Host ""
+          Write-Host "════════════════════════════════════════════════════════"
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # OPTIONAL: TEST BUILD (Quick validation without full installer)
+  # ═════════════════════════════════════════════════════════════════════════
+  test-build:
+    name: Test Build (Quick Validation)
+    runs-on: windows-latest
+    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🗄️ Generate Prisma
+        run: npx prisma generate
+
+      - name: 🏗️ Test Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: ✅ Verify Build
+        run: |
+          if (Test-Path ".next\standalone") {
+            Write-Host "✅ Build successful - ready for full installer build"
+          } else {
+            Write-Host "❌ Build failed"
+            exit 1
+          }
