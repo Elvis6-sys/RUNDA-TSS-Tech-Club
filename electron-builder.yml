@@ -1,7 +1,8 @@
 appId: com.runda.tss.exam
 productName: RUNDA TSS Exam System
 copyright: Copyright © 2025 RUNDA TSS Tech Club
-asar: true
+# CRITICAL: Disable asar completely - relative requires in electron modules don't work with asar
+asar: false
 
 # PERFORMANCE: Skip slow dependency analysis and blockmap generation
 npmRebuild: false
@@ -108,6 +109,7 @@ files:
   - "!**/*.mkv"
 
 # asarUnpack: native .node files and large assets must live outside the asar archive
+# CRITICAL: electron/**/* must be unpacked because main.js uses relative requires
 asarUnpack:
   - ".next/standalone/**/*"
   - ".next/static/**/*"
