@@ -4,22 +4,130 @@ const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 
+// ═══════════════════════════════════════════════════════════════════════════
+// STARTUP DIAGNOSTICS - Log all paths for debugging
+// ═══════════════════════════════════════════════════════════════════════════
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('🚀 RUNDA TSS EXAM SYSTEM - STARTUP DIAGNOSTICS');
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('📍 PATHS:');
+console.log('   __dirname:', __dirname);
+console.log('   __filename:', __filename);
+console.log('   process.cwd():', process.cwd());
+console.log('   app.getAppPath():', app.getAppPath());
+console.log('   app.isPackaged:', app.isPackaged);
+if (app.isPackaged) {
+  console.log('   process.resourcesPath:', process.resourcesPath);
+}
+console.log('   app.getPath(userData):', app.getPath('userData'));
+console.log('');
+console.log('📂 CHECKING ELECTRON MODULE FILES:');
+const electronModules = [
+  'init-database.js',
+  'startup-validator.js',
+  'crashRecovery.js',
+  'syncQueue.js',
+  'sessionLifecycle.js',
+  'vmDetection.js',
+  'integrityCheck.js',
+  'processSignatures.js',
+  'windows-lockdown.js',
+  'linux-lockdown.js'
+];
+electronModules.forEach(moduleName => {
+  const modulePath = path.join(__dirname, moduleName);
+  const exists = fs.existsSync(modulePath);
+  console.log(`   ${exists ? '✅' : '❌'} ${moduleName}: ${modulePath}`);
+});
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENHANCED ERROR LOGGING FOR PRODUCTION DEBUGGING
+// ═══════════════════════════════════════════════════════════════════════════
+const logError = (context, error) => {
+  const errorInfo = {
+    context,
+    message: error.message,
+    stack: error.stack,
+    code: error.code,
+    timestamp: new Date().toISOString(),
+    platform: process.platform,
+    appPath: app.isPackaged ? app.getAppPath() : 'dev',
+    resourcesPath: app.isPackaged ? process.resourcesPath : 'dev'
+  };
+  console.error('🚨 ERROR:', JSON.stringify(errorInfo, null, 2));
+
+  // Write to log file for debugging
+  try {
+    const logPath = path.join(app.getPath('userData'), 'startup-errors.log');
+    fs.appendFileSync(logPath, JSON.stringify(errorInfo, null, 2) + '\n\n');
+    console.log(`📝 Error logged to: ${logPath}`);
+  } catch (logErr) {
+    console.error('Failed to write error log:', logErr);
+  }
+};
+
 // Import modules with error handling
 let crashRecovery, syncQueue, sessionLifecycle, vmDetector, integrityCheck, processSignatures;
 try {
   crashRecovery = require('./crashRecovery');
-  syncQueue = require('./syncQueue');
-  sessionLifecycle = require('./sessionLifecycle');
-  vmDetector = require('./vmDetection');
-  integrityCheck = require('./integrityCheck');
-  processSignatures = require('./processSignatures');
-  console.log('✅ All security modules loaded');
+  console.log('✅ crashRecovery loaded');
 } catch (err) {
-  console.warn('⚠️  Some security modules failed to load:', err.message);
+  logError('crashRecovery import', err);
 }
 
-const { initDatabase } = require('./init-database');
-const { validateStartup } = require('./startup-validator');
+try {
+  syncQueue = require('./syncQueue');
+  console.log('✅ syncQueue loaded');
+} catch (err) {
+  logError('syncQueue import', err);
+}
+
+try {
+  sessionLifecycle = require('./sessionLifecycle');
+  console.log('✅ sessionLifecycle loaded');
+} catch (err) {
+  logError('sessionLifecycle import', err);
+}
+
+try {
+  vmDetector = require('./vmDetection');
+  console.log('✅ vmDetector loaded');
+} catch (err) {
+  logError('vmDetector import', err);
+}
+
+try {
+  integrityCheck = require('./integrityCheck');
+  console.log('✅ integrityCheck loaded');
+} catch (err) {
+  logError('integrityCheck import', err);
+}
+
+try {
+  processSignatures = require('./processSignatures');
+  console.log('✅ processSignatures loaded');
+} catch (err) {
+  logError('processSignatures import', err);
+}
+
+let initDatabase, validateStartup;
+try {
+  const initDbModule = require('./init-database');
+  initDatabase = initDbModule.initDatabase;
+  console.log('✅ init-database loaded');
+} catch (err) {
+  logError('init-database import', err);
+}
+
+try {
+  const startupModule = require('./startup-validator');
+  validateStartup = startupModule.validateStartup;
+  console.log('✅ startup-validator loaded');
+} catch (err) {
+  logError('startup-validator import', err);
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // OS-SPECIFIC LOCKDOWN MODULES
@@ -2116,122 +2224,175 @@ ipcMain.handle('signout', async () => {
 app.whenReady().then(async () => {
   console.log('🎓 RUNDA TSS ULTRA-SECURE EXAM BROWSER - Starting...');
 
-  // ─── WEEK 2: CHECK FOR UNGRACEFUL TERMINATIONS ─────────────────────────
-  console.log('🔍 [SESSION LIFECYCLE] Checking for ungraceful terminations...');
-  const abandonedSessions = sessionLifecycle?.checkForAbandonedSessions() || [];
+  try {
+    // ─── WEEK 2: CHECK FOR UNGRACEFUL TERMINATIONS ─────────────────────────
+    console.log('🔍 [SESSION LIFECYCLE] Checking for ungraceful terminations...');
+    const abandonedSessions = sessionLifecycle?.checkForAbandonedSessions() || [];
 
-  if (abandonedSessions.length > 0) {
-    console.warn(`🚨 [SESSION LIFECYCLE] Found ${abandonedSessions.length} ungraceful exit(s):`);
-    abandonedSessions.forEach(session => {
-      console.warn(`   • Session ${session.sessionId.slice(0, 8)}...`);
-      console.warn(`     Assessment: ${session.assessmentTitle}`);
-      console.warn(`     Started: ${new Date(session.startedAt).toLocaleString()}`);
-      console.warn(`     Duration: ${Math.round(session.timeSinceStart / 1000)}s ago`);
-    });
+    if (abandonedSessions.length > 0) {
+      console.warn(`🚨 [SESSION LIFECYCLE] Found ${abandonedSessions.length} ungraceful exit(s):`);
+      abandonedSessions.forEach(session => {
+        console.warn(`   • Session ${session.sessionId.slice(0, 8)}...`);
+        console.warn(`     Assessment: ${session.assessmentTitle}`);
+        console.warn(`     Started: ${new Date(session.startedAt).toLocaleString()}`);
+        console.warn(`     Duration: ${Math.round(session.timeSinceStart / 1000)}s ago`);
+      });
 
-    // Store for renderer to display warning/recovery dialog
-    global.abandonedSessions = abandonedSessions;
-  } else {
-    console.log('✅ [SESSION LIFECYCLE] No ungraceful exits detected');
-  }
-
-  const lifecycleStats = sessionLifecycle?.getStats() || {};
-  console.log(`📊 [SESSION LIFECYCLE] Stats:`, lifecycleStats);
-  // ───────────────────────────────────────────────────────────────────────
-
-  // ─── START SYNC QUEUE BACKGROUND WORKER ────────────────────────────────
-  console.log('🔄 [SYNC QUEUE] Starting background sync worker...');
-  syncQueue?.startSyncWorker();
-
-  // Register callback to notify renderer of sync status changes
-  syncQueue?.onStatusChange((status) => {
-    if (mainWindow && mainWindow.webContents) {
-      mainWindow.webContents.send('sync-status-changed', status);
-    }
-  });
-
-  // Log initial sync queue status
-  const syncStatus = syncQueue?.getStatus() || { isOnline: false, isSyncing: false, pendingCount: 0 };
-  console.log(`📊 [SYNC QUEUE] Initial status:`, syncStatus);
-  // ────────────────────────────────────────────────────────────────────────
-
-  // ─── REGISTER ADMIN EXIT SHORTCUT IMMEDIATELY AT STARTUP ───────────────
-  // This is registered here (not inside blockAllKeyboardShortcuts) so it is
-  // NEVER accidentally overwritten or blocked by the shortcut-block loop.
-  const adminOk = globalShortcut.register('CommandOrControl+Shift+E', () => {
-    console.log(`🔓 [GLOBAL SHORTCUT] Ctrl+Shift+E pressed — isExamMode: ${isExamMode}`);
-    if (isExamMode) {
-      console.log('🔓 [GLOBAL SHORTCUT] Showing admin exit dialog...');
-      showAdminExitDialog();
+      // Store for renderer to display warning/recovery dialog
+      global.abandonedSessions = abandonedSessions;
     } else {
-      console.log('⚠️ [GLOBAL SHORTCUT] Not in exam mode, ignoring');
+      console.log('✅ [SESSION LIFECYCLE] No ungraceful exits detected');
     }
-  });
-  console.log(adminOk
-    ? '✅ Admin exit shortcut (Ctrl+Shift+E) registered at startup'
-    : '❌ Failed to register Ctrl+Shift+E at startup');
 
-  // ─── REGISTER DEVTOOLS TOGGLE SHORTCUT FOR DEBUGGING ───────────────────
-  const devToolsOk = globalShortcut.register('CommandOrControl+Shift+I', () => {
-    if (mainWindow && mainWindow.webContents) {
-      if (mainWindow.webContents.isDevToolsOpened()) {
-        mainWindow.webContents.closeDevTools();
-        console.log('🔧 [DEVTOOLS] Closed DevTools');
-      } else {
-        mainWindow.webContents.openDevTools();
-        console.log('🔧 [DEVTOOLS] Opened DevTools');
+    const lifecycleStats = sessionLifecycle?.getStats() || {};
+    console.log(`📊 [SESSION LIFECYCLE] Stats:`, lifecycleStats);
+  } catch (err) {
+    logError('SESSION LIFECYCLE initialization', err);
+  }
+
+  try {
+    // ─── START SYNC QUEUE BACKGROUND WORKER ────────────────────────────────
+    console.log('🔄 [SYNC QUEUE] Starting background sync worker...');
+    syncQueue?.startSyncWorker();
+
+    // Register callback to notify renderer of sync status changes
+    syncQueue?.onStatusChange((status) => {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('sync-status-changed', status);
       }
-    }
-  });
-  console.log(devToolsOk
-    ? '✅ DevTools shortcut (Ctrl+Shift+I) registered at startup'
-    : '❌ Failed to register Ctrl+Shift+I at startup');
-  // ───────────────────────────────────────────────────────────────────────
-
-  // ─── WEEK 2: VM DETECTION ──────────────────────────────────────────────
-  console.log('🖥️  [VM DETECTION] Running environment check...');
-  const vmDetection = await vmDetector?.detect() || { isVM: false, confidence: 0, signals: [] };
-
-  if (vmDetection.isVM) {
-    console.warn(`⚠️  [VM DETECTION] Virtual machine detected!`);
-    console.warn(`   Type: ${vmDetector?.getVMType() || 'unknown'}`);
-    console.warn(`   Confidence: ${vmDetection.confidence}%`);
-    console.warn(`   Signals: ${vmDetection.signals.length}`);
-
-    // Store for renderer to display warning
-    global.vmDetection = vmDetection;
-  } else {
-    console.log(`✅ [VM DETECTION] Running on physical hardware`);
-  }
-  // ───────────────────────────────────────────────────────────────────────
-
-  // ─── WEEK 3: SELF-INTEGRITY CHECK ──────────────────────────────────────
-  console.log('🔒 [INTEGRITY] Running self-integrity check...');
-  const integrityResult = integrityCheck?.run() || { ok: true };
-  global.integrityStatus = integrityCheck?.getStatus() || { ok: true };
-
-  if (!integrityResult.ok) {
-    // Don't block app launch — just block exam start so the trainer can see the error.
-    console.error('🚨 [INTEGRITY] App files tampered — exam start will be blocked.');
-    console.error('   Reason:', integrityResult.reason);
-    auditEvent('APP_TAMPERED', {
-      reason: integrityResult.reason,
-      tamperedFiles: integrityCheck?.tamperedFiles?.map(t => t.file) || [],
     });
-  } else {
-    console.log('✅ [INTEGRITY] All files verified clean');
+
+    // Log initial sync queue status
+    const syncStatus = syncQueue?.getStatus() || { isOnline: false, isSyncing: false, pendingCount: 0 };
+    console.log(`📊 [SYNC QUEUE] Initial status:`, syncStatus);
+  } catch (err) {
+    logError('SYNC QUEUE initialization', err);
   }
-  // ───────────────────────────────────────────────────────────────────────
 
-  // ─── DATABASE INITIALIZATION ──────────────────────────────────────────
-  const appPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'app.asar.unpacked')
-    : app.getAppPath();
-  await initDatabase(appPath);
-  // ───────────────────────────────────────────────────────────────────────
+  try {
+    // ─── REGISTER ADMIN EXIT SHORTCUT IMMEDIATELY AT STARTUP ───────────────
+    const adminOk = globalShortcut.register('CommandOrControl+Shift+E', () => {
+      console.log(`🔓 [GLOBAL SHORTCUT] Ctrl+Shift+E pressed — isExamMode: ${isExamMode}`);
+      if (isExamMode) {
+        console.log('🔓 [GLOBAL SHORTCUT] Showing admin exit dialog...');
+        showAdminExitDialog();
+      } else {
+        console.log('⚠️ [GLOBAL SHORTCUT] Not in exam mode, ignoring');
+      }
+    });
+    console.log(adminOk
+      ? '✅ Admin exit shortcut (Ctrl+Shift+E) registered at startup'
+      : '❌ Failed to register Ctrl+Shift+E at startup');
 
-  await startNextServer();
-  createWindow();
+    // ─── REGISTER DEVTOOLS TOGGLE SHORTCUT FOR DEBUGGING ───────────────────
+    const devToolsOk = globalShortcut.register('CommandOrControl+Shift+I', () => {
+      if (mainWindow && mainWindow.webContents) {
+        if (mainWindow.webContents.isDevToolsOpened()) {
+          mainWindow.webContents.closeDevTools();
+          console.log('🔧 [DEVTOOLS] Closed DevTools');
+        } else {
+          mainWindow.webContents.openDevTools();
+          console.log('🔧 [DEVTOOLS] Opened DevTools');
+        }
+      }
+    });
+    console.log(devToolsOk
+      ? '✅ DevTools shortcut (Ctrl+Shift+I) registered at startup'
+      : '❌ Failed to register Ctrl+Shift+I at startup');
+  } catch (err) {
+    logError('KEYBOARD SHORTCUTS registration', err);
+  }
+
+  try {
+    // ─── WEEK 2: VM DETECTION ──────────────────────────────────────────────
+    console.log('🖥️  [VM DETECTION] Running environment check...');
+    const vmDetection = await vmDetector?.detect() || { isVM: false, confidence: 0, signals: [] };
+
+    if (vmDetection.isVM) {
+      console.warn(`⚠️  [VM DETECTION] Virtual machine detected!`);
+      console.warn(`   Type: ${vmDetector?.getVMType() || 'unknown'}`);
+      console.warn(`   Confidence: ${vmDetection.confidence}%`);
+      console.warn(`   Signals: ${vmDetection.signals.length}`);
+
+      // Store for renderer to display warning
+      global.vmDetection = vmDetection;
+    } else {
+      console.log(`✅ [VM DETECTION] Running on physical hardware`);
+    }
+  } catch (err) {
+    logError('VM DETECTION', err);
+  }
+
+  try {
+    // ─── WEEK 3: SELF-INTEGRITY CHECK ──────────────────────────────────────
+    console.log('🔒 [INTEGRITY] Running self-integrity check...');
+    const integrityResult = integrityCheck?.run() || { ok: true };
+    global.integrityStatus = integrityCheck?.getStatus() || { ok: true };
+
+    if (!integrityResult.ok) {
+      console.error('🚨 [INTEGRITY] App files tampered — exam start will be blocked.');
+      console.error('   Reason:', integrityResult.reason);
+      auditEvent('APP_TAMPERED', {
+        reason: integrityResult.reason,
+        tamperedFiles: integrityCheck?.tamperedFiles?.map(t => t.file) || [],
+      });
+    } else {
+      console.log('✅ [INTEGRITY] All files verified clean');
+    }
+  } catch (err) {
+    logError('INTEGRITY CHECK', err);
+  }
+
+  try {
+    // ─── DATABASE INITIALIZATION ──────────────────────────────────────────
+    console.log('🗄️  [DATABASE] Initializing...');
+    const appPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'app.asar.unpacked')
+      : app.getAppPath();
+
+    if (initDatabase) {
+      await initDatabase(appPath);
+      console.log('✅ [DATABASE] Initialized successfully');
+    } else {
+      console.error('❌ [DATABASE] initDatabase function not available - init-database module failed to load');
+    }
+  } catch (err) {
+    logError('DATABASE initialization', err);
+    dialog.showErrorBox(
+      'Database Initialization Failed',
+      `Failed to initialize the database.\n\nError: ${err.message}\n\nThe app may not function correctly. Check the logs at:\n${path.join(app.getPath('userData'), 'startup-errors.log')}`
+    );
+  }
+
+  try {
+    // ─── NEXT.JS SERVER STARTUP ────────────────────────────────────────────
+    console.log('⚡ [NEXT.JS] Starting server...');
+    await startNextServer();
+    console.log('✅ [NEXT.JS] Server started successfully');
+  } catch (err) {
+    logError('NEXT.JS SERVER startup', err);
+    dialog.showErrorBox(
+      'Server Startup Failed',
+      `Failed to start the application server.\n\nError: ${err.message}\n\nThe app cannot continue. Check the logs at:\n${path.join(app.getPath('userData'), 'startup-errors.log')}`
+    );
+    app.quit();
+    return;
+  }
+
+  try {
+    // ─── WINDOW CREATION ───────────────────────────────────────────────────
+    console.log('🪟 [WINDOW] Creating main window...');
+    createWindow();
+    console.log('✅ [WINDOW] Main window created');
+  } catch (err) {
+    logError('WINDOW creation', err);
+    dialog.showErrorBox(
+      'Window Creation Failed',
+      `Failed to create the application window.\n\nError: ${err.message}\n\nCheck the logs at:\n${path.join(app.getPath('userData'), 'startup-errors.log')}`
+    );
+    app.quit();
+    return;
+  }
 
   // Monitor display changes
   screen.on('display-added', (event, newDisplay) => {
