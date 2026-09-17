@@ -702,8 +702,6 @@ function startNextServer() {
           // CRITICAL FIX: Use Electron's internal node.exe
           // process.execPath points to "RUNDA TSS Exam System.exe" which is the Electron APP
           // We need Electron's bundled node.exe instead!
-          const path = require('path');
-          const fs = require('fs');
 
           // Electron's node.exe is bundled in the same directory as the main exe
           const exeDir = path.dirname(process.execPath);
