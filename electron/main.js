@@ -707,18 +707,33 @@ function startNextServer() {
           console.log(`   Script: ${serverJs}`);
           console.log(`   CWD: ${cwd}`);
 
-          nextServer = utilityProcess.fork(serverJs, [], {
-            cwd: cwd,
-            env: {
-              ...process.env,
-              BROWSER: 'none',
-              NODE_ENV: 'production',
-              PORT: '3001',
-              DATABASE_URL: `file:${userDbPath}`,
-              HOSTNAME: '0.0.0.0',
-              IS_ELECTRON: 'true'
-            }
-          });
+          try {
+            nextServer = utilityProcess.fork(serverJs, [], {
+              cwd: cwd,
+              stdio: 'pipe',
+              env: {
+                ...process.env,
+                BROWSER: 'none',
+                NODE_ENV: 'production',
+                PORT: '3001',
+                DATABASE_URL: `file:${userDbPath}`,
+                HOSTNAME: '0.0.0.0',
+                IS_ELECTRON: 'true'
+              }
+            });
+
+            console.log('✅ utilityProcess.fork() called successfully');
+
+            // Handle process spawn event
+            nextServer.once('spawn', () => {
+              console.log('✅ [NEXT.JS] Server process spawned');
+            });
+
+          } catch (err) {
+            console.error(`❌ utilityProcess.fork() failed:`, err);
+            reject(new Error(`utilityProcess.fork failed: ${err.message}`));
+            return;
+          }
         } else {
           // Development mode: use npm
           cwd = path.join(__dirname, '..');
