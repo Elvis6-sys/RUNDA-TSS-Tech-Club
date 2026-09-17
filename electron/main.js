@@ -712,6 +712,13 @@ function startNextServer() {
           console.log(`📁 CWD: ${cwd}`);
         }
 
+        // Log the exact command being run for debugging
+        console.log(`🔍 SPAWN COMMAND DEBUG:`);
+        console.log(`   Command: ${command}`);
+        console.log(`   Args: ${JSON.stringify(args)}`);
+        console.log(`   CWD: ${cwd}`);
+        console.log(`   Shell: false`);
+
         nextServer = spawn(command, args, {
           cwd: cwd,
           shell: false, // CRITICAL: shell:false prevents path-with-spaces issues!
@@ -724,6 +731,16 @@ function startNextServer() {
             HOSTNAME: '0.0.0.0',
             IS_ELECTRON: 'true'  // Flag for Electron environment
           }
+        });
+
+        // CRITICAL: Add error event handler FIRST (before other handlers)
+        nextServer.on('error', (error) => {
+          console.error(`🚨 CRITICAL: Failed to spawn Next.js server process!`);
+          console.error(`   Error: ${error.message}`);
+          console.error(`   Code: ${error.code}`);
+          console.error(`   Command was: ${command}`);
+          console.error(`   Args were: ${JSON.stringify(args)}`);
+          reject(new Error(`Failed to spawn server: ${error.message}`));
         });
 
         nextServer.stdout.on('data', (data) => {
