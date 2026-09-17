@@ -202,20 +202,38 @@ jobs:
           retention-days: 7
 
       # ═══════════════════════════════════════════════════════════════════════
-      # STEP 12: CREATE AUTO-RELEASE (EVERY BUILD)
+      # STEP 12: SKIP RELEASE CREATION (Use Artifacts Instead)
       # ═══════════════════════════════════════════════════════════════════════
-      # Create a release for EVERY successful build to avoid artifact corruption
-      - name: 🚀 Create Auto-Release
+      # GitHub Release upload keeps timing out for large files (586MB)
+      # Users can download from Artifacts instead - works perfectly
+      # To re-enable releases, uncomment the step below
+      - name: ℹ️ Download Instructions
         if: success()
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: build-${{ github.run_number }}
-          name: Windows Portable Build #${{ github.run_number }}
-          files: |
-            dist-electron/*.zip
-          fail_on_unmatched_files: true
-          generate_release_notes: false
-          body: |
+        run: |
+          Write-Host "════════════════════════════════════════════════════════"
+          Write-Host "✅ BUILD COMPLETE!"
+          Write-Host "════════════════════════════════════════════════════════"
+          Write-Host ""
+          Write-Host "📥 TO DOWNLOAD:"
+          Write-Host "   1. Go to: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          Write-Host "   2. Scroll to bottom"
+          Write-Host "   3. Click 'windows-portable' artifact"
+          Write-Host ""
+          Write-Host "📦 File: RUNDA TSS Exam System-0.1.0-portable.zip"
+          Write-Host "📊 Size: ~586 MB"
+          Write-Host ""
+          Write-Host "════════════════════════════════════════════════════════"
+
+      # DISABLED: Release upload times out for large files
+      # - name: 🚀 Create Auto-Release
+      #   if: success()
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     tag_name: build-${{ github.run_number }}
+      #     name: Windows Portable Build #${{ github.run_number }}
+      #     files: |
+      #       dist-electron/*.zip
+      #     body: |
             ## 🎓 RUNDA TSS Exam System - Windows Portable
             
             **Build #${{ github.run_number }}** - Portable version (no installer corruption!)
