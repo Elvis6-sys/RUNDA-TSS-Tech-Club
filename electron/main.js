@@ -45,6 +45,39 @@ console.log('');
 // ═══════════════════════════════════════════════════════════════════════════
 // ENHANCED ERROR LOGGING FOR PRODUCTION DEBUGGING
 // ═══════════════════════════════════════════════════════════════════════════
+const debugLogPath = path.join(require('os').homedir(), 'runda-debug.log');
+
+const logToFile = (message) => {
+  try {
+    const timestamp = new Date().toISOString();
+    fs.appendFileSync(debugLogPath, `[${timestamp}] ${message}\n`);
+  } catch (err) {
+    // Silently fail if can't write log
+  }
+};
+
+// Override console.log to also write to file
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+
+console.log = (...args) => {
+  const message = args.map(arg =>
+    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+  ).join(' ');
+  originalConsoleLog(...args);
+  logToFile(`[LOG] ${message}`);
+};
+
+console.error = (...args) => {
+  const message = args.map(arg =>
+    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+  ).join(' ');
+  originalConsoleError(...args);
+  logToFile(`[ERROR] ${message}`);
+};
+
+console.log(`🚀 Logging to: ${debugLogPath}`);
+
 const logError = (context, error) => {
   const errorInfo = {
     context,
@@ -408,7 +441,13 @@ function createWindow() {
 
   // Load Next.js server
   // Show loading message immediately
-  mainWindow.loadURL(`data:text/html,<html><body style="margin:0;padding:0;background:#1a1a1a;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;"><div style="text-align:center;"><h1>🚀 RUNDA TSS Exam System</h1><p>Starting server, please wait...</p><p style="color:#888;font-size:12px;">This may take 15-30 seconds on first launch</p></div></body></html>`);
+  mainWindow.loadURL(`data:text/html,<html><body style="margin:0;padding:0;background:#1a1a1a;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;"><div style="text-align:center;"><h1>🚀 RUNDA TSS Exam System</h1><p>Starting server, please wait...</p><p style="color:#888;font-size:12px;">This may take 15-30 seconds on first launch</p><p style="color:#666;font-size:11px;margin-top:20px;">Press F12 to open console for debugging</p></div></body></html>`);
+
+  // ALWAYS open DevTools on Windows for debugging
+  if (process.platform === 'win32' && !mainWindow.webContents.isDevToolsOpened()) {
+    mainWindow.webContents.openDevTools();
+    console.log('🔧 DevTools opened for debugging');
+  }
 
   // Wait for server to be fully ready before connecting
   console.log('📡 Waiting for Next.js to fully initialize...');
