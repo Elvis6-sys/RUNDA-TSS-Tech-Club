@@ -610,13 +610,35 @@ function startNextServer() {
 
         if (isPackaged) {
           // In production: run standalone server directly
-          cwd = path.join(process.resourcesPath, 'app.asar.unpacked', '.next', 'standalone');
+          // With asar: false, files are in 'app' directory, not 'app.asar.unpacked'
+          const appRoot = path.join(process.resourcesPath, 'app');
+          cwd = path.join(appRoot, '.next', 'standalone');
           const serverJs = path.join(cwd, 'server.js');
 
           console.log(`🔧 PRODUCTION MODE`);
+          console.log(`📁 App Root: ${appRoot}`);
           console.log(`📁 CWD: ${cwd}`);
           console.log(`🎯 Server: ${serverJs}`);
           console.log(`📦 Server exists: ${fs.existsSync(serverJs)}`);
+
+          // Check if paths exist and log for debugging
+          if (!fs.existsSync(appRoot)) {
+            console.error(`❌ App root not found: ${appRoot}`);
+            console.log(`📁 Checking alternative: ${path.join(process.resourcesPath, 'app.asar.unpacked')}`);
+            const altPath = path.join(process.resourcesPath, 'app.asar.unpacked', '.next', 'standalone', 'server.js');
+            if (fs.existsSync(altPath)) {
+              console.log(`✅ Found server at alternative path`);
+              cwd = path.join(process.resourcesPath, 'app.asar.unpacked', '.next', 'standalone');
+              serverJs = altPath;
+            }
+          }
+
+          if (!fs.existsSync(serverJs)) {
+            const error = `Server file not found at: ${serverJs}`;
+            console.error(`❌ ${error}`);
+            reject(new Error(error));
+            return;
+          }
 
           // Use system Node.js to run standalone server
           command = 'node';
