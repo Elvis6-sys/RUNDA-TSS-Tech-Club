@@ -134,24 +134,14 @@ extraResources:
 
 win:
   target:
-    - nsis
+    # Portable ZIP - most reliable for large apps (no NSIS corruption)
+    - target: zip
+      arch:
+        - x64
   icon: build/icon.ico
-  artifactName: "${productName}-${version}-Setup.exe"
+  artifactName: "${productName}-${version}-portable.zip"
 
-nsis:
-  oneClick: false
-  allowToChangeInstallationDirectory: true
-  allowElevation: true
-  createDesktopShortcut: always
-  createStartMenuShortcut: true
-  shortcutName: "${productName}"
-  installerIcon: build/icon.ico
-  uninstallerIcon: build/icon.ico
-  installerHeaderIcon: build/icon.ico
-  deleteAppDataOnUninstall: false
-  perMachine: false
-  displayLanguageSelector: true
-  packElevateHelper: false
+# Removed NSIS configuration - using portable ZIP instead for reliability
 
 # Disable all code signing and online checks
 electronUpdaterCompatibility: ">=2.16"

@@ -138,7 +138,7 @@ jobs:
       # ═══════════════════════════════════════════════════════════════════════
       # STEP 8: BUILD ELECTRON INSTALLER
       # ═══════════════════════════════════════════════════════════════════════
-      - name: 🎯 Build Windows Installer (.exe)
+      - name: 🎯 Build Windows Portable Package
         run: npm run electron:build:win
         env:
           # GitHub Actions specific settings
@@ -151,19 +151,19 @@ jobs:
       # ═══════════════════════════════════════════════════════════════════════
       # STEP 9: VERIFY INSTALLER WAS CREATED
       # ═══════════════════════════════════════════════════════════════════════
-      - name: ✅ Verify installer creation
+      - name: ✅ Verify package creation
         run: |
           Write-Host "Checking dist-electron directory..."
           if (Test-Path "dist-electron") {
-            Get-ChildItem -Path "dist-electron" -Filter "*.exe" -Recurse | ForEach-Object {
+            Get-ChildItem -Path "dist-electron" -Filter "*.zip" -Recurse | ForEach-Object {
               $size = [math]::Round($_.Length / 1MB, 2)
-              Write-Host "✅ Found installer: $($_.Name) ($size MB)"
+              Write-Host "✅ Found package: $($_.Name) ($size MB)"
             }
             
-            # Check if any .exe files exist
-            $exeFiles = Get-ChildItem -Path "dist-electron" -Filter "*.exe" -Recurse
-            if ($exeFiles.Count -eq 0) {
-              Write-Host "❌ No .exe installer found!"
+            # Check if any .zip files exist
+            $zipFiles = Get-ChildItem -Path "dist-electron" -Filter "*.zip" -Recurse
+            if ($zipFiles.Count -eq 0) {
+              Write-Host "❌ No .zip package found!"
               exit 1
             }
           } else {
@@ -172,15 +172,14 @@ jobs:
           }
 
       # ═══════════════════════════════════════════════════════════════════════
-      # STEP 10: UPLOAD INSTALLER AS ARTIFACT
+      # STEP 10: UPLOAD PORTABLE PACKAGE AS ARTIFACT
       # ═══════════════════════════════════════════════════════════════════════
-      - name: 📤 Upload Windows Installer
+      - name: 📤 Upload Windows Portable Package
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
+          name: windows-portable
           path: |
-            dist-electron/*.exe
-            dist-electron/*.exe.blockmap
+            dist-electron/*.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -211,31 +210,31 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: build-${{ github.run_number }}
-          name: Windows Installer Build #${{ github.run_number }}
+          name: Windows Portable Build #${{ github.run_number }}
           files: |
-            dist-electron/*.exe
+            dist-electron/*.zip
           body: |
-            ## 🎓 RUNDA TSS Exam System - Windows Installer
+            ## 🎓 RUNDA TSS Exam System - Windows Portable
             
-            **Build #${{ github.run_number }}** - Automated build from commit ${{ github.sha }}
+            **Build #${{ github.run_number }}** - Portable version (no installer corruption!)
             
-            ### 📥 Download
+            ### 📥 Download & Install
             
-            Click on `RUNDA TSS Exam System-0.1.0-Setup.exe` below to download the installer.
+            **Download:** `RUNDA TSS Exam System-0.1.0-portable.zip` (below)
             
-            **File size:** ~450 MB  
-            **Direct download:** No extraction needed, no corruption!
+            **Installation Steps:**
+            1. Download the ZIP file
+            2. Extract to a folder (e.g., `C:\RUNDA TSS`)
+            3. Open the extracted folder
+            4. Run `RUNDA TSS Exam System.exe`
+            5. Create desktop shortcut if desired
             
-            ---
-            
-            ### ✅ Installation Steps
-            
-            1. Download the `.exe` file below
-            2. Double-click to run the installer
-            3. Follow the installation wizard (Next → Next → Install)
-            4. Launch from desktop shortcut or Start Menu
-            
-            **First Launch:** Takes 30-60 seconds (database initialization)
+            **Why Portable?**
+            - ✅ No NSIS corruption errors
+            - ✅ No installer integrity issues  
+            - ✅ Works on all Windows 10/11 systems
+            - ✅ Can run from USB drive
+            - ✅ No admin rights needed
             
             ---
             
@@ -254,25 +253,25 @@ jobs:
             
             - **OS**: Windows 10 (64-bit) or Windows 11
             - **RAM**: 4GB minimum, 8GB recommended
-            - **Disk Space**: 1.5GB free space
+            - **Disk Space**: 1.5GB free space (after extraction)
             - **Screen**: 1280x720 minimum resolution
             
             ---
             
             ### 🐛 Latest Fixes
             
+            - ✅ Switched to portable ZIP (no more NSIS errors)
             - ✅ Fixed module loading errors
             - ✅ Fixed cascading error dialogs
             - ✅ Added comprehensive diagnostics
-            - ✅ Improved error handling
             
             ---
             
             ### 📞 Support
             
             **Installation Issues?**
-            - Check Windows Defender didn't block the installer
-            - Run as Administrator if needed
+            - Extract the full ZIP (don't run from inside ZIP)
+            - Check Windows Defender didn't block files
             - Ensure antivirus allows the app
             
             **Login Credentials**:
@@ -296,21 +295,22 @@ jobs:
         if: success()
         run: |
           Write-Host "════════════════════════════════════════════════════════"
-          Write-Host "✅ WINDOWS BUILD SUCCESSFUL!"
+          Write-Host "✅ WINDOWS PORTABLE BUILD SUCCESSFUL!"
           Write-Host "════════════════════════════════════════════════════════"
           Write-Host ""
-          Write-Host "📦 Installer created in: dist-electron/"
+          Write-Host "📦 Package created in: dist-electron/"
           Write-Host ""
-          Get-ChildItem -Path "dist-electron" -Filter "*.exe" | ForEach-Object {
+          Get-ChildItem -Path "dist-electron" -Filter "*.zip" | ForEach-Object {
             $size = [math]::Round($_.Length / 1MB, 2)
             Write-Host "   📁 $($_.Name)"
             Write-Host "   📊 Size: $size MB"
             Write-Host ""
           }
           Write-Host "🎯 Next steps:"
-          Write-Host "   1. Download installer from Artifacts"
-          Write-Host "   2. Test on Windows 10/11"
-          Write-Host "   3. Distribute to students"
+          Write-Host "   1. Download ZIP from Releases"
+          Write-Host "   2. Extract to any folder"
+          Write-Host "   3. Run RUNDA TSS Exam System.exe"
+          Write-Host "   4. No installation needed!"
           Write-Host ""
           Write-Host "════════════════════════════════════════════════════════"
 
