@@ -440,17 +440,37 @@ function createWindow() {
   });
 
   // Load Next.js server
-  // Show loading message immediately
-  mainWindow.loadURL(`data:text/html,<html><body style="margin:0;padding:0;background:#1a1a1a;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;"><div style="text-align:center;"><h1>🚀 RUNDA TSS Exam System</h1><p>Starting server, please wait...</p><p style="color:#888;font-size:12px;">This may take 15-30 seconds on first launch</p><p style="color:#666;font-size:11px;margin-top:20px;">Press F12 to open console for debugging</p></div></body></html>`);
+  // Show detailed loading status directly on screen
+  let loadingStatus = [];
+  const updateLoadingScreen = (message) => {
+    loadingStatus.push(`[${new Date().toLocaleTimeString()}] ${message}`);
+    const html = `
+      <html>
+        <body style="margin:0;padding:20px;background:#1a1a1a;color:#fff;font-family:'Courier New',monospace;font-size:12px;">
+          <h1 style="color:#4CAF50;margin-bottom:20px;">🚀 RUNDA TSS Exam System - Startup Log</h1>
+          <div style="background:#000;padding:15px;border-radius:5px;max-height:80vh;overflow-y:auto;">
+            ${loadingStatus.map(msg => `<div style="margin:5px 0;${msg.includes('❌') ? 'color:#ff4444;' : msg.includes('✅') ? 'color:#4CAF50;' : 'color:#888;'}">${msg}</div>`).join('')}
+          </div>
+          <div style="margin-top:20px;padding:10px;background:#333;border-radius:5px;">
+            <strong>Debug Info:</strong><br>
+            Platform: ${process.platform}<br>
+            Packaged: ${app.isPackaged}<br>
+            Resources: ${process.resourcesPath || 'N/A'}
+          </div>
+        </body>
+      </html>
+    `;
+    mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+    console.log(message);
+  };
 
-  // ALWAYS open DevTools on Windows for debugging
-  if (process.platform === 'win32' && !mainWindow.webContents.isDevToolsOpened()) {
-    mainWindow.webContents.openDevTools();
-    console.log('🔧 DevTools opened for debugging');
-  }
+  updateLoadingScreen('🔧 Starting application...');
+  updateLoadingScreen(`📍 Platform: ${process.platform}`);
+  updateLoadingScreen(`📦 Packaged: ${app.isPackaged}`);
+  updateLoadingScreen(`📁 Resources path: ${process.resourcesPath}`);
 
   // Wait for server to be fully ready before connecting
-  console.log('📡 Waiting for Next.js to fully initialize...');
+  updateLoadingScreen('📡 Waiting for Next.js server initialization...');
 
   setTimeout(async () => {
     console.log('📡 Now attempting to connect to server...');
