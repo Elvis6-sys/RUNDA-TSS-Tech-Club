@@ -29,6 +29,10 @@ on:
         type: boolean
         default: false
 
+# Required permissions for creating releases
+permissions:
+  contents: write  # Required for creating releases and uploading assets
+  
 jobs:
   build-windows:
     name: Build Windows Installer (Electron)
