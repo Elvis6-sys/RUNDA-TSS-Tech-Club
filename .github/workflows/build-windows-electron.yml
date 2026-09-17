@@ -225,88 +225,17 @@ jobs:
           Write-Host "════════════════════════════════════════════════════════"
 
       # DISABLED: Release upload times out for large files
+      # Uncomment below to re-enable (after fixing upload timeout issue)
+      #
       # - name: 🚀 Create Auto-Release
       #   if: success()
       #   uses: softprops/action-gh-release@v2
       #   with:
       #     tag_name: build-${{ github.run_number }}
       #     name: Windows Portable Build #${{ github.run_number }}
-      #     files: |
-      #       dist-electron/*.zip
-      #     body: |
-            ## 🎓 RUNDA TSS Exam System - Windows Portable
-            
-            **Build #${{ github.run_number }}** - Portable version (no installer corruption!)
-            
-            ### 📥 Download & Install
-            
-            **Download:** `RUNDA TSS Exam System-0.1.0-portable.zip` (below)
-            
-            **Installation Steps:**
-            1. Download the ZIP file
-            2. Extract to a folder (e.g., `C:\RUNDA TSS`)
-            3. Open the extracted folder
-            4. Run `RUNDA TSS Exam System.exe`
-            5. Create desktop shortcut if desired
-            
-            **Why Portable?**
-            - ✅ No NSIS corruption errors
-            - ✅ No installer integrity issues  
-            - ✅ Works on all Windows 10/11 systems
-            - ✅ Can run from USB drive
-            - ✅ No admin rights needed
-            
-            ---
-            
-            ### 📦 What's Included
-            
-            - ✅ **Fully Offline** (no internet needed)
-            - ✅ **SQLite Database** (bundled)
-            - ✅ **PDF Viewer** (all PDFs work)
-            - ✅ **Anti-Cheat System** (exam security)
-            - ✅ **Quiz System** (with bug fixes)
-            - ✅ **User Management** (admin/teacher/student roles)
-            
-            ---
-            
-            ### 🔧 System Requirements
-            
-            - **OS**: Windows 10 (64-bit) or Windows 11
-            - **RAM**: 4GB minimum, 8GB recommended
-            - **Disk Space**: 1.5GB free space (after extraction)
-            - **Screen**: 1280x720 minimum resolution
-            
-            ---
-            
-            ### 🐛 Latest Fixes
-            
-            - ✅ Switched to portable ZIP (no more NSIS errors)
-            - ✅ Fixed module loading errors
-            - ✅ Fixed cascading error dialogs
-            - ✅ Added comprehensive diagnostics
-            
-            ---
-            
-            ### 📞 Support
-            
-            **Installation Issues?**
-            - Extract the full ZIP (don't run from inside ZIP)
-            - Check Windows Defender didn't block files
-            - Ensure antivirus allows the app
-            
-            **Login Credentials**:
-            - **Admin**: `leotuyi10@gmail.com` / `12345678`
-            - **Trainer**: `leotuyi100@gmail.com` / `12345678`
-            
-            ---
-            
-            **Built:** ${{ github.event.head_commit.timestamp }}  
-            **Commit:** ${{ github.sha }}  
-            **Branch:** ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     files: dist-electron/*.zip
+      #     draft: false
+      #     prerelease: false
 
       # ═══════════════════════════════════════════════════════════════════════
       # STEP 13: POST-BUILD SUMMARY
