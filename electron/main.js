@@ -699,9 +699,21 @@ function startNextServer() {
             return;
           }
 
-          // CRITICAL FIX: Use Electron's built-in Node.js (process.execPath) instead of 'node' command
-          // This works even if Node.js is not installed on the user's system
-          command = process.execPath;
+          // CRITICAL FIX: Use Electron's internal node.exe
+          // process.execPath points to "RUNDA TSS Exam System.exe" which is the Electron APP
+          // We need Electron's bundled node.exe instead!
+          const path = require('path');
+          const fs = require('fs');
+
+          // Electron's node.exe is bundled in the same directory as the main exe
+          const exeDir = path.dirname(process.execPath);
+          const nodeExe = path.join(exeDir, 'node.exe');
+
+          console.log(`🔍 Looking for node.exe at: ${nodeExe}`);
+          console.log(`📦 Node.exe exists: ${fs.existsSync(nodeExe)}`);
+
+          // Use Electron's node.exe if it exists, otherwise fall back to process.execPath
+          command = fs.existsSync(nodeExe) ? nodeExe : process.execPath;
           args = [serverJs];
         } else {
           // Development mode: use npm
