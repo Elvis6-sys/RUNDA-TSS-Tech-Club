@@ -199,28 +199,39 @@ jobs:
           retention-days: 7
 
       # ═══════════════════════════════════════════════════════════════════════
-      # STEP 12: CREATE RELEASE (Only on tag push)
+      # STEP 12: CREATE AUTO-RELEASE (EVERY BUILD)
       # ═══════════════════════════════════════════════════════════════════════
-      - name: 🚀 Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+      # Create a release for EVERY successful build to avoid artifact corruption
+      - name: 🚀 Create Auto-Release
+        if: success()
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: build-${{ github.run_number }}
+          name: Windows Installer Build #${{ github.run_number }}
           files: |
             dist-electron/*.exe
           body: |
             ## 🎓 RUNDA TSS Exam System - Windows Installer
             
-            ### ✅ For Windows Students (Windows 10/11)
+            **Build #${{ github.run_number }}** - Automated build from commit ${{ github.sha }}
             
-            **Download**: `RUNDA TSS Exam System-${{ github.ref_name }}-Setup.exe`
+            ### 📥 Download
             
-            **Installation Steps**:
-            1. Download the installer above
-            2. Double-click the `.exe` file
+            Click on `RUNDA TSS Exam System-0.1.0-Setup.exe` below to download the installer.
+            
+            **File size:** ~450 MB  
+            **Direct download:** No extraction needed, no corruption!
+            
+            ---
+            
+            ### ✅ Installation Steps
+            
+            1. Download the `.exe` file below
+            2. Double-click to run the installer
             3. Follow the installation wizard (Next → Next → Install)
             4. Launch from desktop shortcut or Start Menu
             
-            **First Launch**: Takes 30-60 seconds (database initialization)
+            **First Launch:** Takes 30-60 seconds (database initialization)
             
             ---
             
@@ -244,12 +255,12 @@ jobs:
             
             ---
             
-            ### 🐛 Bug Fixes in This Release
+            ### 🐛 Latest Fixes
             
-            - ✅ Fixed quiz freezing after 2-3 questions
-            - ✅ Fixed DevTools security vulnerability
-            - ✅ Fixed Windows port cleanup crash
-            - ✅ Improved cross-platform compatibility
+            - ✅ Fixed module loading errors
+            - ✅ Fixed cascading error dialogs
+            - ✅ Added comprehensive diagnostics
+            - ✅ Improved error handling
             
             ---
             
@@ -266,9 +277,9 @@ jobs:
             
             ---
             
-            **Built on**: Native Windows Server (GitHub Actions)
-            **Build Date**: ${{ github.event.head_commit.timestamp }}
-            **Commit**: ${{ github.sha }}
+            **Built:** ${{ github.event.head_commit.timestamp }}  
+            **Commit:** ${{ github.sha }}  
+            **Branch:** ${{ github.ref_name }}
           draft: false
           prerelease: false
         env:
