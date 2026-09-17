@@ -714,7 +714,7 @@ function startNextServer() {
 
         nextServer = spawn(command, args, {
           cwd: cwd,
-          shell: true, // Use shell on all platforms for compatibility
+          shell: false, // CRITICAL: shell:false prevents path-with-spaces issues!
           env: {
             ...process.env,
             BROWSER: 'none',
