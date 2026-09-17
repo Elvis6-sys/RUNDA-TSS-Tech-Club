@@ -699,8 +699,9 @@ function startNextServer() {
             return;
           }
 
-          // Use system Node.js to run standalone server
-          command = 'node';
+          // CRITICAL FIX: Use Electron's built-in Node.js (process.execPath) instead of 'node' command
+          // This works even if Node.js is not installed on the user's system
+          command = process.execPath;
           args = [serverJs];
         } else {
           // Development mode: use npm
