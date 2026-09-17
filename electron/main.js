@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, dialog, screen, powerMonitor, shell } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, dialog, screen, powerMonitor, shell, utilityProcess } = require('electron');
 const path = require('path');
 const { spawn, exec } = require('child_process');
 const fs = require('fs');
@@ -699,20 +699,26 @@ function startNextServer() {
             return;
           }
 
-          // CRITICAL FIX: Use Electron's internal node.exe
-          // process.execPath points to "RUNDA TSS Exam System.exe" which is the Electron APP
-          // We need Electron's bundled node.exe instead!
+          // CRITICAL FIX: Use Electron's utilityProcess API
+          // This is designed for running Node.js scripts in packaged Electron apps
+          // It uses Electron's embedded Node.js - no separate node.exe needed!
 
-          // Electron's node.exe is bundled in the same directory as the main exe
-          const exeDir = path.dirname(process.execPath);
-          const nodeExe = path.join(exeDir, 'node.exe');
+          console.log(`🔍 Using utilityProcess.fork() for Node.js script`);
+          console.log(`   Script: ${serverJs}`);
+          console.log(`   CWD: ${cwd}`);
 
-          console.log(`🔍 Looking for node.exe at: ${nodeExe}`);
-          console.log(`📦 Node.exe exists: ${fs.existsSync(nodeExe)}`);
-
-          // Use Electron's node.exe if it exists, otherwise fall back to process.execPath
-          command = fs.existsSync(nodeExe) ? nodeExe : process.execPath;
-          args = [serverJs];
+          nextServer = utilityProcess.fork(serverJs, [], {
+            cwd: cwd,
+            env: {
+              ...process.env,
+              BROWSER: 'none',
+              NODE_ENV: 'production',
+              PORT: '3001',
+              DATABASE_URL: `file:${userDbPath}`,
+              HOSTNAME: '0.0.0.0',
+              IS_ELECTRON: 'true'
+            }
+          });
         } else {
           // Development mode: use npm
           cwd = path.join(__dirname, '..');
@@ -720,36 +726,27 @@ function startNextServer() {
           args = ['run', 'dev'];
           console.log(`🔧 DEVELOPMENT MODE`);
           console.log(`📁 CWD: ${cwd}`);
+
+          nextServer = spawn(command, args, {
+            cwd: cwd,
+            shell: false,
+            env: {
+              ...process.env,
+              BROWSER: 'none',
+              NODE_ENV: process.env.NODE_ENV,
+              PORT: '3001',
+              DATABASE_URL: process.env.DATABASE_URL,
+              HOSTNAME: '0.0.0.0',
+              IS_ELECTRON: 'true'
+            }
+          });
         }
-
-        // Log the exact command being run for debugging
-        console.log(`🔍 SPAWN COMMAND DEBUG:`);
-        console.log(`   Command: ${command}`);
-        console.log(`   Args: ${JSON.stringify(args)}`);
-        console.log(`   CWD: ${cwd}`);
-        console.log(`   Shell: false`);
-
-        nextServer = spawn(command, args, {
-          cwd: cwd,
-          shell: false, // CRITICAL: shell:false prevents path-with-spaces issues!
-          env: {
-            ...process.env,
-            BROWSER: 'none',
-            NODE_ENV: isPackaged ? 'production' : process.env.NODE_ENV,
-            PORT: '3001',
-            DATABASE_URL: isPackaged ? `file:${userDbPath}` : process.env.DATABASE_URL,
-            HOSTNAME: '0.0.0.0',
-            IS_ELECTRON: 'true'  // Flag for Electron environment
-          }
-        });
 
         // CRITICAL: Add error event handler FIRST (before other handlers)
         nextServer.on('error', (error) => {
           console.error(`🚨 CRITICAL: Failed to spawn Next.js server process!`);
           console.error(`   Error: ${error.message}`);
           console.error(`   Code: ${error.code}`);
-          console.error(`   Command was: ${command}`);
-          console.error(`   Args were: ${JSON.stringify(args)}`);
           reject(new Error(`Failed to spawn server: ${error.message}`));
         });
 
