@@ -5,7 +5,9 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
-  disable: process.env.NODE_ENV === "development",
+  // CRITICAL: Disable PWA for both development AND production
+  // Service worker causes crashes in Electron when precaching fails
+  disable: true,
   workboxOptions: {
     disableDevLogs: true,
     runtimeCaching: [
