@@ -202,40 +202,43 @@ jobs:
           retention-days: 7
 
       # ═══════════════════════════════════════════════════════════════════════
-      # STEP 12: SKIP RELEASE CREATION (Use Artifacts Instead)
+      # STEP 12: CREATE GITHUB RELEASE FOR PUBLIC DOWNLOAD
       # ═══════════════════════════════════════════════════════════════════════
-      # GitHub Release upload keeps timing out for large files (586MB)
-      # Users can download from Artifacts instead - works perfectly
-      # To re-enable releases, uncomment the step below
-      - name: ℹ️ Download Instructions
+      - name: 🚀 Create GitHub Release
         if: success()
-        run: |
-          Write-Host "════════════════════════════════════════════════════════"
-          Write-Host "✅ BUILD COMPLETE!"
-          Write-Host "════════════════════════════════════════════════════════"
-          Write-Host ""
-          Write-Host "📥 TO DOWNLOAD:"
-          Write-Host "   1. Go to: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          Write-Host "   2. Scroll to bottom"
-          Write-Host "   3. Click 'windows-portable' artifact"
-          Write-Host ""
-          Write-Host "📦 File: RUNDA TSS Exam System-0.1.0-portable.zip"
-          Write-Host "📊 Size: ~586 MB"
-          Write-Host ""
-          Write-Host "════════════════════════════════════════════════════════"
-
-      # DISABLED: Release upload times out for large files
-      # Uncomment below to re-enable (after fixing upload timeout issue)
-      #
-      # - name: 🚀 Create Auto-Release
-      #   if: success()
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     tag_name: build-${{ github.run_number }}
-      #     name: Windows Portable Build #${{ github.run_number }}
-      #     files: dist-electron/*.zip
-      #     draft: false
-      #     prerelease: false
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "Windows Build #${{ github.run_number }} - ${{ github.event.head_commit.message }}"
+          body: |
+            ## 📥 Download Windows Portable Version
+            
+            **File:** `RUNDA TSS Exam System-0.1.0-portable.zip`
+            **Size:** ~450-500 MB
+            
+            ### 📋 Installation Instructions:
+            1. Download the ZIP file below
+            2. Extract to any folder (Desktop, Documents, etc.)
+            3. Run `RUNDA TSS Exam System.exe`
+            4. No installation needed - fully portable!
+            
+            ### ✅ This Build Includes:
+            - All electron security modules
+            - Fixed startup crash issues
+            - Complete login form display
+            - All curriculum content
+            
+            ### 🔧 Commit:
+            ${{ github.sha }}
+            
+            ### 📅 Built:
+            ${{ github.event.head_commit.timestamp }}
+          files: dist-electron/*.zip
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ═══════════════════════════════════════════════════════════════════════
       # STEP 13: POST-BUILD SUMMARY
