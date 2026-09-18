@@ -699,15 +699,22 @@ function startNextServer() {
             return;
           }
 
-          // CRITICAL FIX: Use Electron's utilityProcess API
-          // This is designed for running Node.js scripts in packaged Electron apps
+          // CRITICAL FIX: Use Electron's utilityProcess API with fallback to spawn
+          // utilityProcess.fork() is designed for running Node.js scripts in packaged apps
           // It uses Electron's embedded Node.js - no separate node.exe needed!
 
-          console.log(`🔍 Using utilityProcess.fork() for Node.js script`);
+          console.log(`🔍 Attempting to use utilityProcess.fork() for Node.js script`);
           console.log(`   Script: ${serverJs}`);
           console.log(`   CWD: ${cwd}`);
 
+          let serverStarted = false;
+
+          // Try utilityProcess.fork() first (preferred method)
           try {
+            if (typeof utilityProcess === 'undefined' || typeof utilityProcess.fork !== 'function') {
+              throw new Error('utilityProcess API not available in this Electron version');
+            }
+
             nextServer = utilityProcess.fork(serverJs, [], {
               cwd: cwd,
               stdio: 'pipe',
@@ -723,15 +730,48 @@ function startNextServer() {
             });
 
             console.log('✅ utilityProcess.fork() called successfully');
+            serverStarted = true;
 
             // Handle process spawn event
             nextServer.once('spawn', () => {
-              console.log('✅ [NEXT.JS] Server process spawned');
+              console.log('✅ [NEXT.JS] Server process spawned via utilityProcess');
             });
 
           } catch (err) {
-            console.error(`❌ utilityProcess.fork() failed:`, err);
-            reject(new Error(`utilityProcess.fork failed: ${err.message}`));
+            console.error(`❌ utilityProcess.fork() failed: ${err.message}`);
+            console.log(`🔄 Falling back to spawn() with process.execPath`);
+
+            // FALLBACK: Use spawn with process.execPath (Electron's Node.js)
+            // This should work because Electron's executable contains Node.js
+            try {
+              nextServer = spawn(process.execPath, [serverJs], {
+                cwd: cwd,
+                shell: false,
+                stdio: 'pipe',
+                env: {
+                  ...process.env,
+                  BROWSER: 'none',
+                  NODE_ENV: 'production',
+                  PORT: '3001',
+                  DATABASE_URL: `file:${userDbPath}`,
+                  HOSTNAME: '0.0.0.0',
+                  IS_ELECTRON: 'true'
+                }
+              });
+
+              console.log(`✅ Fallback spawn() with process.execPath called`);
+              console.log(`   Executable: ${process.execPath}`);
+              serverStarted = true;
+
+            } catch (spawnErr) {
+              console.error(`❌ spawn() fallback also failed: ${spawnErr.message}`);
+              reject(new Error(`Both utilityProcess.fork() and spawn() failed: ${err.message}, ${spawnErr.message}`));
+              return;
+            }
+          }
+
+          if (!serverStarted) {
+            reject(new Error('Failed to start server - no method succeeded'));
             return;
           }
         } else {
