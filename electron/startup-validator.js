@@ -60,7 +60,9 @@ function validateStartup(isPackaged, resourcesPath) {
     }
 
     if (!bundledDb) {
-      errors.push(`Bundled database not found in any location:\n${possibleDbLocations.map(l => `  - ${l}`).join('\n')}`);
+      // Database is optional - init-database will create one if needed
+      warnings.push(`Bundled database not found (will be created on first run):\n${possibleDbLocations.map(l => `  - ${l}`).join('\n')}`);
+      console.warn('⚠️  [VALIDATOR] Bundled database not found - will create empty database');
     }
   }
 
