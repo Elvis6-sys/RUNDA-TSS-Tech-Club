@@ -1,6 +1,7 @@
 /**
  * Startup Validator - Checks all requirements before app starts
  * Prevents 500 errors by validating everything upfront
+ * Version: 1.1 - Database optional
  */
 
 const fs = require('fs');
