@@ -353,6 +353,7 @@ function createWindow() {
       allowRunningInsecureContent: true,
       devTools: true,
       plugins: true, // Enable PDF plugin
+      cache: false, // Disable HTTP cache
     },
     show: false,
     // frame:false on Linux prevents XFCE from ever getting a decoration handle.
@@ -475,11 +476,21 @@ function createWindow() {
   setTimeout(async () => {
     console.log('📡 Now attempting to connect to server...');
 
+    // CRITICAL: Clear all caches to ensure fresh content loads
+    console.log('🧹 Clearing browser caches...');
+    await mainWindow.webContents.session.clearCache();
+    await mainWindow.webContents.session.clearStorageData({
+      storages: ['appcache', 'serviceworkers', 'cachestorage']
+    });
+    console.log('✅ Caches cleared');
+
     // Try loading with retries - go direct to auth/login to bypass startup check
     let retries = 5;
     while (retries > 0) {
       try {
-        await mainWindow.loadURL('http://127.0.0.1:3001/auth/login');
+        // Add cache-busting query parameter
+        const cacheBust = `?v=${Date.now()}`;
+        await mainWindow.loadURL(`http://127.0.0.1:3001/auth/login${cacheBust}`);
         console.log('✅ Successfully loaded login page');
         break;
       } catch (err) {
