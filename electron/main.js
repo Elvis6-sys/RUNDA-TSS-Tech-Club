@@ -669,35 +669,43 @@ function startNextServer() {
 
         if (isPackaged) {
           // In production: run standalone server directly
-          // With asar: false, files are in 'app' directory, not 'app.asar.unpacked'
-          const appRoot = path.join(process.resourcesPath, 'app');
-          cwd = path.join(appRoot, '.next', 'standalone');
-          const serverJs = path.join(cwd, 'server.js');
-
+          // Try multiple locations (electron-builder might use asar despite asar: false)
           console.log(`🔧 PRODUCTION MODE`);
-          console.log(`📁 App Root: ${appRoot}`);
-          console.log(`📁 CWD: ${cwd}`);
-          console.log(`🎯 Server: ${serverJs}`);
-          console.log(`📦 Server exists: ${fs.existsSync(serverJs)}`);
 
-          // Check if paths exist and log for debugging
-          if (!fs.existsSync(appRoot)) {
-            console.error(`❌ App root not found: ${appRoot}`);
-            console.log(`📁 Checking alternative: ${path.join(process.resourcesPath, 'app.asar.unpacked')}`);
-            const altPath = path.join(process.resourcesPath, 'app.asar.unpacked', '.next', 'standalone', 'server.js');
-            if (fs.existsSync(altPath)) {
-              console.log(`✅ Found server at alternative path`);
-              cwd = path.join(process.resourcesPath, 'app.asar.unpacked', '.next', 'standalone');
-              serverJs = altPath;
+          const possibleRoots = [
+            path.join(process.resourcesPath, 'app'),                    // asar: false
+            path.join(process.resourcesPath, 'app.asar.unpacked')       // asar: true with unpacked
+          ];
+
+          let appRoot = null;
+          let serverJs = null;
+
+          for (const root of possibleRoots) {
+            const testServerPath = path.join(root, '.next', 'standalone', 'server.js');
+            if (fs.existsSync(testServerPath)) {
+              appRoot = root;
+              cwd = path.join(root, '.next', 'standalone');
+              serverJs = testServerPath;
+              console.log(`✅ Found server at: ${serverJs}`);
+              break;
+            } else {
+              console.log(`❌ Server not found at: ${testServerPath}`);
             }
           }
 
-          if (!fs.existsSync(serverJs)) {
-            const error = `Server file not found at: ${serverJs}`;
+          if (!serverJs) {
+            const error = `Server file not found in any location:\n${possibleRoots.map(r => path.join(r, '.next', 'standalone', 'server.js')).join('\n')}`;
             console.error(`❌ ${error}`);
+            const { dialog } = require('electron');
+            dialog.showErrorBox('Server Startup Failed', error);
             reject(new Error(error));
             return;
           }
+
+          console.log(`📁 App Root: ${appRoot}`);
+          console.log(`📁 CWD: ${cwd}`);
+          console.log(`🎯 Server: ${serverJs}`);
+
 
           // CRITICAL FIX: Use Electron's utilityProcess API with fallback to spawn
           // utilityProcess.fork() is designed for running Node.js scripts in packaged apps
