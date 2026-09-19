@@ -1,26 +1,23 @@
 name: Build Windows Electron Installer
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 🎯 PURPOSE: Build Windows .exe installer on REAL Windows machine
+# 🎯 PURPOSE: Build Windows installer and portable exe on REAL Windows machine
 # ═══════════════════════════════════════════════════════════════════════════
-# This workflow solves the cross-compilation failure we've been stuck on by:
-# 1. Running on actual Windows Server (not Wine emulation)
-# 2. Using native Windows build tools
-# 3. Proper canvas module compilation
-# 4. Standard NSIS installer creation
+# This workflow builds two formats:
+# 1. NSIS Installer (.exe) - Proper Windows installer with Start Menu shortcuts
+# 2. Portable Executable (.exe) - No installation needed, run directly
 #
-# Result: Working Windows installer that students can actually use!
+# Both fix Windows 11 SmartScreen issues that ZIP format had!
 # ═══════════════════════════════════════════════════════════════════════════
 
 on:
-  # Trigger on push to main branch or version tags
   push:
     branches:
       - main
+      - windows-fix-clean
     tags:
       - 'v*.*.*'
 
-  # Allow manual trigger from GitHub UI
   workflow_dispatch:
     inputs:
       skip_tests:
@@ -29,27 +26,20 @@ on:
         type: boolean
         default: false
 
-# Required permissions for creating releases
 permissions:
-  contents: write  # Required for creating releases and uploading assets
+  contents: write
   
 jobs:
   build-windows:
     name: Build Windows Installer (Electron)
-    runs-on: windows-latest  # Use latest Windows Server
+    runs-on: windows-latest
 
     steps:
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 1: CHECKOUT CODE
-      # ═══════════════════════════════════════════════════════════════════════
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for version tagging
+          fetch-depth: 0
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 2: SETUP NODE.JS
-      # ═══════════════════════════════════════════════════════════════════════
       - name: 📦 Setup Node.js 20.x
         uses: actions/setup-node@v4
         with:
@@ -61,9 +51,6 @@ jobs:
           node --version
           npm --version
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 3: SETUP PYTHON (Required for node-gyp)
-      # ═══════════════════════════════════════════════════════════════════════
       - name: 🐍 Setup Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -72,24 +59,15 @@ jobs:
       - name: ✅ Verify Python installation
         run: python --version
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 4: SETUP VISUAL STUDIO BUILD TOOLS
-      # ═══════════════════════════════════════════════════════════════════════
-      # GitHub Actions Windows runners already have VS Build Tools installed
-      # But we verify and ensure MSBuild is available
       - name: 🔧 Setup MSBuild (Visual Studio Build Tools)
         uses: microsoft/setup-msbuild@v2
 
       - name: ✅ Verify MSBuild
         run: msbuild -version
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 5: INSTALL DEPENDENCIES
-      # ═══════════════════════════════════════════════════════════════════════
       - name: 📚 Install npm dependencies
         run: npm ci
         env:
-          # Increase Node.js memory for large dependency install
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: ✅ Verify critical modules
@@ -101,9 +79,6 @@ jobs:
           echo "Checking electron-builder..."
           npm list electron-builder
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 6: GENERATE PRISMA CLIENT
-      # ═══════════════════════════════════════════════════════════════════════
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
 
@@ -116,14 +91,10 @@ jobs:
             exit 1
           }
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 7: BUILD NEXT.JS APPLICATION
-      # ═══════════════════════════════════════════════════════════════════════
       - name: 🏗️ Build Next.js app
         run: npm run build
         env:
           NODE_ENV: production
-          # Increase memory for build
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: ✅ Verify Next.js build
@@ -135,59 +106,61 @@ jobs:
             exit 1
           }
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 8: BUILD ELECTRON INSTALLER
-      # ═══════════════════════════════════════════════════════════════════════
-      - name: 🎯 Build Windows Portable Package
+      - name: 🎯 Build Windows Installer and Portable
         run: npm run electron:build:win
         env:
-          # GitHub Actions specific settings
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Increase memory for electron-builder
           NODE_OPTIONS: --max-old-space-size=4096
-          # Electron builder settings
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 9: VERIFY INSTALLER WAS CREATED
-      # ═══════════════════════════════════════════════════════════════════════
-      - name: ✅ Verify package creation
+      - name: ✅ Verify installers creation
         run: |
           Write-Host "Checking dist-electron directory..."
           if (Test-Path "dist-electron") {
-            Get-ChildItem -Path "dist-electron" -Filter "*.zip" -Recurse | ForEach-Object {
+            Write-Host ""
+            Write-Host "═══════════════════════════════════════"
+            Write-Host "📦 GENERATED FILES:"
+            Write-Host "═══════════════════════════════════════"
+            
+            Get-ChildItem -Path "dist-electron" -Filter "*.exe" -Recurse | ForEach-Object {
               $size = [math]::Round($_.Length / 1MB, 2)
-              Write-Host "✅ Found package: $($_.Name) ($size MB)"
+              Write-Host "✅ $($_.Name) ($size MB)"
             }
             
-            # Check if any .zip files exist
-            $zipFiles = Get-ChildItem -Path "dist-electron" -Filter "*.zip" -Recurse
-            if ($zipFiles.Count -eq 0) {
-              Write-Host "❌ No .zip package found!"
+            $exeFiles = Get-ChildItem -Path "dist-electron" -Filter "*.exe" -Recurse
+            if ($exeFiles.Count -eq 0) {
+              Write-Host "❌ No installer files found!"
+              Write-Host "Listing all files in dist-electron:"
+              Get-ChildItem -Path "dist-electron" -Recurse
               exit 1
             }
+            
+            Write-Host ""
+            Write-Host "Total files generated: $($exeFiles.Count)"
+            Write-Host "═══════════════════════════════════════"
           } else {
             Write-Host "❌ dist-electron directory not found!"
             exit 1
           }
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 10: UPLOAD PORTABLE PACKAGE AS ARTIFACT
-      # ═══════════════════════════════════════════════════════════════════════
-      - name: 📤 Upload Windows Portable Package
+      - name: 📤 Upload NSIS Installer
         uses: actions/upload-artifact@v4
         with:
-          name: windows-portable
-          path: |
-            dist-electron/*.zip
-          if-no-files-found: error
+          name: windows-nsis-installer
+          path: dist-electron/*Setup*.exe
+          if-no-files-found: warn
           retention-days: 30
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 11: UPLOAD BUILD LOGS (For debugging if build fails)
-      # ═══════════════════════════════════════════════════════════════════════
+      - name: 📤 Upload Portable Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable-exe
+          path: dist-electron/*Portable*.exe
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: 📋 Upload build logs
-        if: always()  # Upload even if build fails
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
@@ -201,74 +174,79 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 12: CREATE GITHUB RELEASE FOR PUBLIC DOWNLOAD
-      # ═══════════════════════════════════════════════════════════════════════
       - name: 🚀 Create GitHub Release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: "Windows Build #${{ github.run_number }} - ${{ github.event.head_commit.message }}"
+          name: "Windows Build #${{ github.run_number }}"
           body: |
-            ## 📥 Download Windows Portable Version
+            ## 📥 Download Windows Installer
             
-            **File:** `RUNDA TSS Exam System-0.1.0-portable.zip`
-            **Size:** ~450-500 MB
+            ### Two formats available:
             
-            ### 📋 Installation Instructions:
-            1. Download the ZIP file below
-            2. Extract to any folder (Desktop, Documents, etc.)
-            3. Run `RUNDA TSS Exam System.exe`
-            4. No installation needed - fully portable!
+            **1. NSIS Installer (Recommended)**
+            - File: `RUNDA TSS Exam System Setup-0.1.0.exe`
+            - Proper Windows installer with Start Menu shortcuts
+            - Desktop icon included
+            - Better Windows 11 SmartScreen compatibility
+            
+            **2. Portable Executable**
+            - File: `RUNDA TSS Exam System Portable-0.1.0.exe`
+            - No installation needed
+            - Run directly from any folder
+            - Good for USB drives or temporary use
+            
+            ### 📋 Installation Instructions (NSIS):
+            1. Download the Setup.exe file below
+            2. Run the installer
+            3. Follow the installation wizard
+            4. Launch from Start Menu or Desktop shortcut
+            
+            ### 📋 Usage Instructions (Portable):
+            1. Download the Portable.exe file
+            2. Place in any folder
+            3. Run directly - no installation needed!
             
             ### ✅ This Build Includes:
+            - All Tauri references removed (Electron-only now)
+            - Fixed Windows database paths (AppData/Roaming)
+            - Automatic database copy on first launch
             - All electron security modules
-            - Fixed startup crash issues
-            - Complete login form display
-            - All curriculum content
+            - Complete login and curriculum content
             
             ### 🔧 Commit:
             ${{ github.sha }}
             
             ### 📅 Built:
             ${{ github.event.head_commit.timestamp }}
-          files: dist-electron/*.zip
+          files: dist-electron/*.exe
           draft: false
           prerelease: false
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ═══════════════════════════════════════════════════════════════════════
-      # STEP 13: POST-BUILD SUMMARY
-      # ═══════════════════════════════════════════════════════════════════════
       - name: 📊 Build Summary
         if: success()
         run: |
           Write-Host "════════════════════════════════════════════════════════"
-          Write-Host "✅ WINDOWS PORTABLE BUILD SUCCESSFUL!"
+          Write-Host "✅ WINDOWS BUILD SUCCESSFUL!"
           Write-Host "════════════════════════════════════════════════════════"
           Write-Host ""
-          Write-Host "📦 Package created in: dist-electron/"
+          Write-Host "📦 Files created in: dist-electron/"
           Write-Host ""
-          Get-ChildItem -Path "dist-electron" -Filter "*.zip" | ForEach-Object {
+          Get-ChildItem -Path "dist-electron" -Filter "*.exe" | ForEach-Object {
             $size = [math]::Round($_.Length / 1MB, 2)
             Write-Host "   📁 $($_.Name)"
             Write-Host "   📊 Size: $size MB"
             Write-Host ""
           }
-          Write-Host "🎯 Next steps:"
-          Write-Host "   1. Download ZIP from Releases"
-          Write-Host "   2. Extract to any folder"
-          Write-Host "   3. Run RUNDA TSS Exam System.exe"
-          Write-Host "   4. No installation needed!"
+          Write-Host "🎯 Download from:"
+          Write-Host "   https://github.com/${{ github.repository }}/releases"
           Write-Host ""
           Write-Host "════════════════════════════════════════════════════════"
 
-  # ═════════════════════════════════════════════════════════════════════════
-  # OPTIONAL: TEST BUILD (Quick validation without full installer)
-  # ═════════════════════════════════════════════════════════════════════════
   test-build:
     name: Test Build (Quick Validation)
     runs-on: windows-latest
