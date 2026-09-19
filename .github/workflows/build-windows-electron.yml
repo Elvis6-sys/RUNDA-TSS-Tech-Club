@@ -91,6 +91,18 @@ jobs:
             exit 1
           }
 
+      - name: 🧹 Clean Next.js cache
+        run: |
+          Write-Host "Cleaning Next.js cache..."
+          if (Test-Path ".next") {
+            Remove-Item -Path ".next" -Recurse -Force
+            Write-Host "✅ Removed .next directory"
+          }
+          if (Test-Path "node_modules\.cache") {
+            Remove-Item -Path "node_modules\.cache" -Recurse -Force
+            Write-Host "✅ Removed node_modules cache"
+          }
+
       - name: 🏗️ Build Next.js app
         run: npm run build
         env:
@@ -101,6 +113,17 @@ jobs:
         run: |
           if (Test-Path ".next\standalone") {
             Write-Host "✅ Next.js standalone build created"
+            
+            # Verify CSS was generated
+            $cssFiles = Get-ChildItem -Path ".next\static\css" -Filter "*.css" -ErrorAction SilentlyContinue
+            if ($cssFiles) {
+              foreach ($css in $cssFiles) {
+                $size = [math]::Round($css.Length / 1KB, 2)
+                Write-Host "   CSS: $($css.Name) ($size KB)"
+              }
+            } else {
+              Write-Host "⚠️  No CSS files found"
+            }
           } else {
             Write-Host "❌ Next.js standalone build missing"
             exit 1
