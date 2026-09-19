@@ -13,21 +13,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  // Load theme from localStorage on mount (client-side only)
+  // Load theme from localStorage on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light';
-      setTheme(savedTheme);
-    }
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light';
+    setTheme(savedTheme);
   }, []);
 
-  // Toggle theme and save to localStorage (client-side only)
+  // Toggle theme and save to localStorage
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', newTheme);
-    }
+    localStorage.setItem('theme', newTheme);
   };
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -50,10 +46,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Store token in localStorage for browser-side access (client-side only)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth-token', data.token);
-      }
+      // Store token in localStorage for browser-side access
+      localStorage.setItem('auth-token', data.token);
 
       // Log success
       console.log('✅ Login successful, redirecting to dashboard...');
@@ -141,13 +135,14 @@ export default function LoginPage() {
             </div>
 
             {/* Circular Images - Horizontal on mobile, vertical on desktop */}
-            <div className="flex flex-row lg:flex-col items-center lg:space-y-2">
+            <div className="flex flex-row lg:flex-col items-center lg:space-y-2 relative z-0">
               {studentImages.map((img, idx) => (
                 <div
                   key={idx}
                   className={`relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden border-2 lg:border-4 ${theme === 'light' ? 'border-white' : 'border-slate-700'} shadow-lg hover:scale-105 transition-transform ${idx > 0 ? '-ml-3 lg:ml-0 lg:-mt-3' : ''}`}
                   style={{
-                    zIndex: studentImages.length - idx
+                    zIndex: idx === 0 ? 3 : idx === 1 ? 2 : 1,
+                    position: 'relative'
                   }}
                 >
                   <Image
@@ -155,6 +150,7 @@ export default function LoginPage() {
                     alt={`Student ${idx + 1}`}
                     fill
                     className="object-cover"
+                    style={{ zIndex: -1 }}
                   />
                 </div>
               ))}
