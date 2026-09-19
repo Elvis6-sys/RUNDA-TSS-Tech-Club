@@ -104,9 +104,12 @@ jobs:
           }
 
       - name: 🏗️ Build Next.js app
-        run: npm run build
+        run: |
+          Write-Host "Building Next.js with Tailwind CSS..."
+          $env:NODE_ENV = "production"
+          $env:TAILWIND_MODE = "build"
+          npm run build
         env:
-          NODE_ENV: production
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: ✅ Verify Next.js build
@@ -120,13 +123,47 @@ jobs:
               foreach ($css in $cssFiles) {
                 $size = [math]::Round($css.Length / 1KB, 2)
                 Write-Host "   CSS: $($css.Name) ($size KB)"
+                
+                # Check if CSS is empty or too small
+                if ($css.Length -lt 1024) {
+                  Write-Host "⚠️  WARNING: CSS file is suspiciously small!"
+                }
               }
+              
+              # CRITICAL: Copy CSS to standalone directory (might not be auto-copied)
+              $standaloneStaticPath = ".next\standalone\.next\static"
+              if (-not (Test-Path $standaloneStaticPath)) {
+                New-Item -ItemType Directory -Path $standaloneStaticPath -Force | Out-Null
+              }
+              
+              Write-Host "Copying static assets to standalone..."
+              Copy-Item -Path ".next\static\*" -Destination $standaloneStaticPath -Recurse -Force
+              Write-Host "✅ Static assets copied to standalone build"
+              
             } else {
-              Write-Host "⚠️  No CSS files found"
+              Write-Host "❌ WARNING: No CSS files found!"
             }
           } else {
             Write-Host "❌ Next.js standalone build missing"
             exit 1
+          }
+
+      - name: 📦 Prepare standalone bundle
+        run: |
+          Write-Host "Preparing standalone bundle with all assets..."
+          
+          # Ensure public directory is copied
+          if (Test-Path "public") {
+            Copy-Item -Path "public" -Destination ".next\standalone\public" -Recurse -Force
+            Write-Host "✅ Copied public directory to standalone"
+          }
+          
+          # Verify static directory exists in standalone
+          if (Test-Path ".next\standalone\.next\static") {
+            $staticFiles = Get-ChildItem -Path ".next\standalone\.next\static" -Recurse
+            Write-Host "✅ Standalone static directory has $($staticFiles.Count) files"
+          } else {
+            Write-Host "❌ WARNING: No static directory in standalone!"
           }
 
       - name: 📋 Create placeholder .env
