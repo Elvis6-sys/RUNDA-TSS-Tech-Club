@@ -106,6 +106,21 @@ jobs:
             exit 1
           }
 
+      - name: 📋 Create placeholder .env and database
+        run: |
+          Write-Host "Creating placeholder .env file..."
+          @"
+          # Placeholder .env for GitHub Actions build
+          DATABASE_URL="file:./prisma/dev.db"
+          NEXTAUTH_SECRET="github-actions-build-secret-placeholder"
+          NEXTAUTH_URL="http://localhost:3000"
+          "@ | Out-File -FilePath .env -Encoding utf8
+          Write-Host "✅ Placeholder .env created"
+          
+          Write-Host "Creating empty database..."
+          npx prisma db push --skip-generate
+          Write-Host "✅ Empty database created"
+
       - name: 🎯 Build Windows Installer and Portable
         run: npm run electron:build:win
         env:

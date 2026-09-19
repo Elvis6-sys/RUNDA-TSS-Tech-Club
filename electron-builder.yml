@@ -126,11 +126,16 @@ asarUnpack:
 extraResources:
   - from: ".env"
     to: ".env"
+    filter:
+      - "**/*"
   - from: "prisma/dev.db"
     to: "prisma/dev.db"
-  # Also place dev.db where startup-validator expects it
+    filter:
+      - "**/*"
   - from: "prisma/dev.db"
     to: "app.asar.unpacked/prisma/dev.db"
+    filter:
+      - "**/*"
 
 win:
   target:
