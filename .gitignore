@@ -34,6 +34,9 @@ build-temp/
 *.sql
 prisma/migrations/
 
+# EXCEPTION: Allow the pre-seeded database template for distribution
+!prisma/seed-template.db
+
 # Logs
 *.log
 logs/

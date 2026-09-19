@@ -19,9 +19,10 @@ files:
   - ".next/standalone/**/*"
   - ".next/static/**/*"
   - "public/**/*"
-  # Prisma schema and database
+  # Prisma schema and pre-seeded database
   - "prisma/schema.prisma"
   - "prisma/dev.db"
+  - "prisma/seed-template.db"
   # App content
   - "All Curriculums/**/*"
   # Electron main process files
@@ -132,8 +133,16 @@ extraResources:
     to: "prisma/dev.db"
     filter:
       - "**/*"
+  - from: "prisma/seed-template.db"
+    to: "prisma/seed-template.db"
+    filter:
+      - "**/*"
   - from: "prisma/dev.db"
     to: "app.asar.unpacked/prisma/dev.db"
+    filter:
+      - "**/*"
+  - from: "prisma/seed-template.db"
+    to: "app.asar.unpacked/prisma/seed-template.db"
     filter:
       - "**/*"
 

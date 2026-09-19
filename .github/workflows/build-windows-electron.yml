@@ -106,7 +106,7 @@ jobs:
             exit 1
           }
 
-      - name: 📋 Create placeholder .env and database
+      - name: 📋 Create placeholder .env
         run: |
           Write-Host "Creating placeholder .env file..."
           @"
@@ -116,11 +116,20 @@ jobs:
           NEXTAUTH_URL="http://localhost:3000"
           "@ | Out-File -FilePath .env -Encoding utf8
           Write-Host "✅ Placeholder .env created"
+
+      - name: 📦 Copy pre-seeded database
+        run: |
+          Write-Host "Copying pre-seeded database template..."
+          Copy-Item -Path "prisma\seed-template.db" -Destination "prisma\dev.db" -Force
+          Write-Host "✅ Pre-seeded database ready"
           
-          Write-Host "Creating and seeding database..."
-          npx prisma db push --skip-generate
-          npx prisma db seed
-          Write-Host "✅ Database created and seeded with default users"
+          if (Test-Path "prisma\dev.db") {
+            $size = [math]::Round((Get-Item "prisma\dev.db").Length / 1KB, 2)
+            Write-Host "   Database size: $size KB"
+          } else {
+            Write-Host "❌ Database file not found!"
+            exit 1
+          }
 
       - name: 🎯 Build Windows Installer and Portable
         run: npm run electron:build:win

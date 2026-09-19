@@ -663,9 +663,12 @@ function startNextServer() {
           console.log('📦 [DATABASE] First launch — copying seeded database...');
           const bundledDbCandidates = [
             path.join(process.resourcesPath, 'prisma', 'dev.db'),
+            path.join(process.resourcesPath, 'prisma', 'seed-template.db'),
             path.join(process.resourcesPath, 'app.db'),
             path.join(process.resourcesPath, 'app.asar.unpacked', 'prisma', 'dev.db'),
+            path.join(process.resourcesPath, 'app.asar.unpacked', 'prisma', 'seed-template.db'),
             path.join(__dirname, '..', 'prisma', 'dev.db'),
+            path.join(__dirname, '..', 'prisma', 'seed-template.db'),
           ];
           let copied = false;
           for (const candidate of bundledDbCandidates) {
