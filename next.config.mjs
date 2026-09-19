@@ -51,6 +51,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // CRITICAL: Ensure assets are served from correct path
+  assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
+  basePath: '',
   // Speed up builds by skipping lint and type check
   eslint: {
     ignoreDuringBuilds: true,

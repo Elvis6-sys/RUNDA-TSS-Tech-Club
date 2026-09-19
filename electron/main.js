@@ -734,14 +734,24 @@ function startNextServer() {
 
           let appRoot = null;
           let serverJs = null;
+          let serverWrapper = null;
 
           for (const root of possibleRoots) {
             const testServerPath = path.join(root, '.next', 'standalone', 'server.js');
+            const testWrapperPath = path.join(root, 'electron', 'server-wrapper.js');
+
             if (fs.existsSync(testServerPath)) {
               appRoot = root;
               cwd = path.join(root, '.next', 'standalone');
               serverJs = testServerPath;
-              console.log(`✅ Found server at: ${serverJs}`);
+
+              // Prefer wrapper if it exists (ensures static files are served correctly)
+              if (fs.existsSync(testWrapperPath)) {
+                serverWrapper = testWrapperPath;
+                console.log(`✅ Found server wrapper at: ${serverWrapper}`);
+              } else {
+                console.log(`✅ Found server at: ${serverJs} (no wrapper)`);
+              }
               break;
             } else {
               console.log(`❌ Server not found at: ${testServerPath}`);
@@ -759,7 +769,7 @@ function startNextServer() {
 
           console.log(`📁 App Root: ${appRoot}`);
           console.log(`📁 CWD: ${cwd}`);
-          console.log(`🎯 Server: ${serverJs}`);
+          console.log(`🎯 Server: ${serverWrapper || serverJs}`);
 
 
           // CRITICAL FIX: Use Electron's utilityProcess API with fallback to spawn
@@ -778,7 +788,7 @@ function startNextServer() {
               throw new Error('utilityProcess API not available in this Electron version');
             }
 
-            nextServer = utilityProcess.fork(serverJs, [], {
+            nextServer = utilityProcess.fork(serverWrapper || serverJs, [], {
               cwd: cwd,
               stdio: 'pipe',
               env: {
@@ -786,9 +796,10 @@ function startNextServer() {
                 BROWSER: 'none',
                 NODE_ENV: 'production',
                 PORT: '3001',
-                DATABASE_URL: `file:${userDbPath}`,
+                DATABASE_URL: dbUrl,
                 HOSTNAME: '0.0.0.0',
-                IS_ELECTRON: 'true'
+                IS_ELECTRON: 'true',
+                RESOURCES_PATH: process.resourcesPath
               }
             });
 
@@ -807,7 +818,7 @@ function startNextServer() {
             // FALLBACK: Use spawn with process.execPath (Electron's Node.js)
             // This should work because Electron's executable contains Node.js
             try {
-              nextServer = spawn(process.execPath, [serverJs], {
+              nextServer = spawn(process.execPath, [serverWrapper || serverJs], {
                 cwd: cwd,
                 shell: false,
                 stdio: 'pipe',
@@ -816,9 +827,10 @@ function startNextServer() {
                   BROWSER: 'none',
                   NODE_ENV: 'production',
                   PORT: '3001',
-                  DATABASE_URL: `file:${userDbPath}`,
+                  DATABASE_URL: dbUrl,
                   HOSTNAME: '0.0.0.0',
-                  IS_ELECTRON: 'true'
+                  IS_ELECTRON: 'true',
+                  RESOURCES_PATH: process.resourcesPath
                 }
               });
 
