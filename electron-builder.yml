@@ -134,14 +134,26 @@ extraResources:
 
 win:
   target:
-    # Portable ZIP - most reliable for large apps (no NSIS corruption)
-    - target: zip
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
       arch:
         - x64
   icon: build/icon.ico
-  artifactName: "${productName}-${version}-portable.zip"
+  artifactName: "${productName}-${version}-${target}.exe"
 
-# Removed NSIS configuration - using portable ZIP instead for reliability
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "RUNDA TSS Exam System"
+  warningsAsErrors: false
+  perMachine: false
 
 # Disable all code signing and online checks
 electronUpdaterCompatibility: ">=2.16"

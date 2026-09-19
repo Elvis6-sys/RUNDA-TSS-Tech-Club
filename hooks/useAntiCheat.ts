@@ -110,15 +110,6 @@ export function useAntiCheat({
     } catch { /* non-fatal */ }
   }, [submissionId, studentName, nodeTitle, trackId]);
 
-  // ── Detect if running in Tauri ───────────────────────────────────────────
-  const isInTauri = useCallback(() => {
-    if (typeof window === 'undefined') return false;
-    if (sessionStorage.getItem('quiz_in_tauri') === 'true') return true;
-    if ('__TAURI__' in window) return true;
-    if (navigator.userAgent.includes('Tauri')) return true;
-    return false;
-  }, []);
-
   // ── Detect if running in Electron ────────────────────────────────────────
   const isInElectron = useCallback(() => {
     if (typeof window === 'undefined') return false;
@@ -129,10 +120,10 @@ export function useAntiCheat({
     return false;
   }, []);
 
-  // ── Detect if running in ANY secure browser (Tauri OR Electron) ──────────
+  // ── Detect if running in ANY secure browser (Electron) ──────────────────
   const isInSecureBrowser = useCallback(() => {
-    return isInTauri() || isInElectron();
-  }, [isInTauri, isInElectron]);
+    return isInElectron();
+  }, [isInElectron]);
 
   // ── Violation handler ─────────────────────────────────────────────────────
   const handleViolation = useCallback(async (type: CheatEvent["type"]) => {
@@ -149,7 +140,7 @@ export function useAntiCheat({
     const strikes = cur.strikes + 1;
     onCheatDetected?.(strikes);
 
-    // ⚠️ SECURE BROWSER MODE (Electron OR Tauri): Log violations but NEVER auto-submit
+    // ⚠️ SECURE BROWSER MODE (Electron): Log violations but NEVER auto-submit
     // The environment is already locked down at OS level
     if (isInSecureBrowser()) {
       console.log(`[Secure Browser] Violation logged: ${type} (Strike ${strikes}) - Auto-submit DISABLED`);
@@ -183,13 +174,13 @@ export function useAntiCheat({
     filePickerRef.current = false;
 
     const inSecureBrowser = isInSecureBrowser();
-    console.log(`🔒 [AntiCheat] Mode: ${inSecureBrowser ? 'SECURE BROWSER (Electron/Tauri)' : 'WEB BROWSER'}`);
+    console.log(`🔒 [AntiCheat] Mode: ${inSecureBrowser ? 'SECURE BROWSER (Electron)' : 'WEB BROWSER'}`);
     console.log(`🔒 [AntiCheat] Auto-submit: ${inSecureBrowser ? 'DISABLED (OS handles security)' : 'ENABLED (1 strike = instant fail)'}`);
 
     setState({ active: true, strikes: 0, warning: null, autoSubmitted: false, events: [], needsFullscreenRestore: false });
 
     // Only manage fullscreen in web browser mode
-    // In Electron/Tauri, fullscreen is managed at the OS level
+    // In Electron, fullscreen is managed at the OS level
     if (!inSecureBrowser) {
       await enterFullscreen();
       graceRef.current = true;
@@ -280,7 +271,7 @@ export function useAntiCheat({
 
     const onBlur = () => {
       if (filePickerRef.current) return;
-      // In Tauri, window is always on top - blur is false positive
+      // In Electron, window is always on top - blur is false positive
       if (isInSecureBrowser()) {
         console.log('[Secure Browser] Blur ignored (OS handles window focus)');
         return;
@@ -290,7 +281,7 @@ export function useAntiCheat({
 
     const onVisibility = () => {
       if (filePickerRef.current) return;
-      // In Tauri, visibility changes are false positives
+      // In Electron, visibility changes are false positives
       if (isInSecureBrowser()) {
         console.log('[Secure Browser] Visibility change ignored');
         return;
@@ -300,7 +291,7 @@ export function useAntiCheat({
 
     const onFSChange = () => {
       if (filePickerRef.current) return; // picker caused fullscreen exit — handled separately
-      // In Tauri, fullscreen is managed by Tauri itself, not the web page
+      // In Electron, fullscreen is managed by Electron main process, not the web page
       if (isInSecureBrowser()) {
         console.log('[Secure Browser] Fullscreen change ignored (OS manages window)');
         return;
@@ -314,7 +305,7 @@ export function useAntiCheat({
 
     const onContextMenu = (e: MouseEvent) => {
       e.preventDefault();
-      // In Tauri, right-click is already blocked - no need to log violation
+      // In Electron, right-click is already blocked - no need to log violation
       if (isInSecureBrowser()) {
         console.log('[Secure Browser] Context menu blocked (no violation logged)');
         return;
@@ -361,7 +352,7 @@ export function useAntiCheat({
         e.preventDefault();
         e.stopPropagation();
 
-        // In Tauri: ESC is already blocked at OS level - no violation
+        // In Electron: ESC is already blocked at OS level - no violation
         if (isInSecureBrowser()) {
           console.log('[Secure Browser] ESC blocked at OS level (no violation logged)');
           return false;

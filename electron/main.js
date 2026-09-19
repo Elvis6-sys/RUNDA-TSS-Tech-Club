@@ -643,12 +643,53 @@ function startNextServer() {
 
         // CRITICAL: Set database path for offline operation
         const os = require('os');
-        const configDir = path.join(os.homedir(), '.config', 'runda-tss-tech-club');
+
+        // Platform-appropriate database directory
+        // Windows uses AppData/Roaming, Linux/macOS use .config
+        const configDir = process.platform === 'win32'
+          ? path.join(os.homedir(), 'AppData', 'Roaming', 'runda-tss-tech-club')
+          : path.join(os.homedir(), '.config', 'runda-tss-tech-club');
+
         const userDbPath = path.join(configDir, 'app.db');
+
+        // Ensure directory exists (critical on first Windows install)
+        if (!fs.existsSync(configDir)) {
+          fs.mkdirSync(configDir, { recursive: true });
+          console.log(`📁 [DATABASE] Created config dir: ${configDir}`);
+        }
+
+        // Copy seeded database on first launch (Windows fresh install)
+        if (!fs.existsSync(userDbPath)) {
+          console.log('📦 [DATABASE] First launch — copying seeded database...');
+          const bundledDbCandidates = [
+            path.join(process.resourcesPath, 'prisma', 'dev.db'),
+            path.join(process.resourcesPath, 'app.db'),
+            path.join(process.resourcesPath, 'app.asar.unpacked', 'prisma', 'dev.db'),
+            path.join(__dirname, '..', 'prisma', 'dev.db'),
+          ];
+          let copied = false;
+          for (const candidate of bundledDbCandidates) {
+            if (fs.existsSync(candidate)) {
+              fs.copyFileSync(candidate, userDbPath);
+              console.log(`✅ [DATABASE] Copied from: ${candidate}`);
+              copied = true;
+              break;
+            }
+          }
+          if (!copied) {
+            console.error('❌ [DATABASE] No bundled database found! Searched:',
+              bundledDbCandidates);
+          }
+        } else {
+          console.log(`✅ [DATABASE] Existing database found: ${userDbPath}`);
+        }
+
+        // CRITICAL: Prisma requires forward slashes even on Windows
+        const dbUrl = `file:${userDbPath.replace(/\\/g, '/')}`;
 
         // Override DATABASE_URL for production to use writable user directory
         if (isPackaged) {
-          process.env.DATABASE_URL = `file:${userDbPath}`;
+          process.env.DATABASE_URL = dbUrl;
           console.log(`📊 [DATABASE] Set to: ${process.env.DATABASE_URL}`);
         }
 

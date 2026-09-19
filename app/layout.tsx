@@ -19,7 +19,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <script src="/tauri-init.js" defer></script>
       </head>
       <body>
         {children}

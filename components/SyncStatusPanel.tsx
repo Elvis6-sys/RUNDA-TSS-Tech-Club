@@ -9,7 +9,7 @@ import {
   getSyncStatusMessage,
   type SyncStats
 } from '@/src/lib/syncClient';
-import { getUnsyncedCount, isTauriApp } from '@/src/lib/offlineStorage';
+import { getUnsyncedCount, isElectronApp } from '@/src/lib/offlineStorage';
 import { RefreshCw, Check, AlertCircle, Clock, Wifi, WifiOff } from 'lucide-react';
 
 export default function SyncStatusPanel() {
@@ -18,13 +18,13 @@ export default function SyncStatusPanel() {
   const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncResult, setLastSyncResult] = useState<string | null>(null);
-  const [showInTauri, setShowInTauri] = useState(false);
+  const [showInElectron, setShowInElectron] = useState(false);
 
   // Update stats periodically
   useEffect(() => {
-    setShowInTauri(isTauriApp());
+    setShowInElectron(isElectronApp());
 
-    if (!isTauriApp()) return;
+    if (!isElectronApp()) return;
 
     const updateStats = async () => {
       const syncStats = await getSyncStats();
@@ -86,8 +86,8 @@ export default function SyncStatusPanel() {
     }
   };
 
-  // Don't render if not in Tauri
-  if (!showInTauri) return null;
+  // Don't render if not in Electron
+  if (!showInElectron) return null;
   if (!stats) return null;
 
   const statusColor = getSyncStatusColor(stats);

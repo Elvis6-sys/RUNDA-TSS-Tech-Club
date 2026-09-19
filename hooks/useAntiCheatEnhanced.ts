@@ -137,20 +137,11 @@ export function useAntiCheatEnhanced({
     } catch { /* non-fatal */ }
   }, [submissionId, studentName, nodeTitle, trackId]);
 
-  // ── Detect if running in Tauri ───────────────────────────────────────────
-  const isInTauri = useCallback(() => {
-    // Check multiple indicators that we're in Tauri
+  // ── Detect if running in Electron ────────────────────────────────────────
+  const isInElectron = useCallback((): boolean => {
     if (typeof window === 'undefined') return false;
-
-    // Primary: Check for __TAURI__ global object
-    if ('__TAURI__' in window) return true;
-
-    // Secondary: Check user agent for Tauri identifier
-    if (navigator.userAgent.includes('Tauri')) return true;
-
-    // Tertiary: Check sessionStorage flag (set on activate)
-    if (sessionStorage.getItem('quiz_in_tauri') === 'true') return true;
-
+    if ((window as any).isElectron === true) return true;
+    if (navigator.userAgent.toLowerCase().includes('electron')) return true;
     return false;
   }, []);
 
@@ -169,13 +160,13 @@ export function useAntiCheatEnhanced({
     const strikes = cur.strikes + 1;
     onCheatDetected?.(strikes);
 
-    // In Tauri secure browser: Log violations but NEVER auto-submit
+    // In Electron secure browser: Log violations but NEVER auto-submit
     // The environment is already locked down at OS level
-    if (isInTauri()) {
+    if (isInElectron()) {
       // Just log the violation, no auto-submit ever
       setState(s => ({ ...s, strikes, warning: null, events: [...s.events, event] }));
       report(event, false); // false = not auto-submitted
-      console.log(`[Tauri Mode] Violation logged: ${type} (Strike ${strikes}/${MAX_STRIKES}) - Auto-submit disabled`);
+      console.log(`[Electron Mode] Violation logged: ${type} (Strike ${strikes}/${MAX_STRIKES}) - Auto-submit disabled`);
       return;
     }
 
@@ -199,46 +190,40 @@ export function useAntiCheatEnhanced({
     filePickerRef.current = false;
 
     const fingerprint = generateFingerprint();
-    const inTauri = isInTauri();
+    const inElectron = isInElectron();
 
     setState({
       active: true, strikes: 0, warning: null, autoSubmitted: false,
       events: [], needsFullscreenRestore: false, deviceFingerprint: fingerprint,
     });
 
-    // Only enter fullscreen if NOT in Tauri (Tauri handles its own fullscreen)
-    if (!inTauri) {
+    // Only enter fullscreen if NOT in Electron (Electron handles its own fullscreen)
+    if (!inElectron) {
       await enterFullscreen();
       graceRef.current = true;
       setTimeout(() => { graceRef.current = false; }, 1500);
     } else {
-      console.log('[Tauri Mode] Secure Browser detected - Fullscreen managed by Tauri');
+      console.log('[Electron Mode] Secure Desktop detected - Fullscreen managed by Electron');
     }
 
     // Store fingerprint
     sessionStorage.setItem('quiz_fingerprint', fingerprint);
-
-    // Store Tauri mode flag
-    if (inTauri) {
-      sessionStorage.setItem('quiz_in_tauri', 'true');
-    }
-  }, [enterFullscreen, generateFingerprint, isInTauri]);
+  }, [enterFullscreen, generateFingerprint, isInElectron]);
 
   const deactivate = useCallback(async () => {
     warningRef.current = false;
     filePickerRef.current = false;
     setState(s => ({ ...s, active: false, warning: null, needsFullscreenRestore: false }));
 
-    // Only exit fullscreen if NOT in Tauri
-    if (!isInTauri()) {
+    // Only exit fullscreen if NOT in Electron
+    if (!isInElectron()) {
       await exitFullscreen();
     }
 
     // Clear session data
     sessionStorage.removeItem('quiz_fingerprint');
-    sessionStorage.removeItem('quiz_in_tauri');
     localStorage.removeItem('quiz_session_active');
-  }, [exitFullscreen, isInTauri]);
+  }, [exitFullscreen, isInElectron]);
 
   const dismissWarning = useCallback(async () => {
     warningRef.current = false;
@@ -281,10 +266,10 @@ export function useAntiCheatEnhanced({
     if (!state.active) return;
 
     // Log environment mode
-    const inTauri = isInTauri();
-    console.log(`[AntiCheat] Mode: ${inTauri ? 'TAURI SECURE BROWSER' : 'WEB BROWSER'}`);
-    console.log(`[AntiCheat] Auto-submit: ${inTauri ? 'DISABLED' : 'ENABLED (3 strikes)'}`);
-    console.log(`[AntiCheat] ESC blocking: ${inTauri ? 'OS-level (Tauri)' : 'Web-level (preventDefault)'}`);
+    const inElectron = isInElectron();
+    console.log(`[AntiCheat] Mode: ${inElectron ? 'ELECTRON SECURE BROWSER' : 'WEB BROWSER'}`);
+    console.log(`[AntiCheat] Auto-submit: ${inElectron ? 'DISABLED' : 'ENABLED (3 strikes)'}`);
+    console.log(`[AntiCheat] ESC blocking: ${inElectron ? 'OS-level (Electron)' : 'Web-level (preventDefault)'}`);
 
     let resizeTimer: ReturnType<typeof setTimeout>;
     let monitorInterval: ReturnType<typeof setInterval>;
@@ -293,10 +278,10 @@ export function useAntiCheatEnhanced({
     const onBlur = () => {
       if (filePickerRef.current) return;
 
-      // In Tauri secure mode, window is always on top and focused
-      // Blur events in Tauri are false positives from internal events
-      if (isInTauri()) {
-        console.log('[Tauri Mode] Blur event ignored (window always on top)');
+      // In Electron secure mode, window is always on top and focused
+      // Blur events in Electron are false positives from internal events
+      if (isInElectron()) {
+        console.log('[Electron Mode] Blur event ignored (window always on top)');
         return;
       }
 
@@ -311,10 +296,10 @@ export function useAntiCheatEnhanced({
     const onFSChange = () => {
       if (filePickerRef.current) return;
 
-      // In Tauri, fullscreen is managed by the app itself, not the web page
-      // Don't trigger violations for fullscreen changes in Tauri
-      if (isInTauri()) {
-        console.log('[Tauri Mode] Fullscreen change detected but ignored (Tauri manages fullscreen)');
+      // In Electron, fullscreen is managed by the app itself, not the web page
+      // Don't trigger violations for fullscreen changes in Electron
+      if (isInElectron()) {
+        console.log('[Electron Mode] Fullscreen change detected but ignored (Electron manages fullscreen)');
         return;
       }
 
@@ -575,5 +560,5 @@ export function useAntiCheatEnhanced({
     };
   }, [state.active, handleViolation]);
 
-  return { state, activate, deactivate, dismissWarning, openFilePicker, restoreFullscreen, isInTauri: isInTauri() };
+  return { state, activate, deactivate, dismissWarning, openFilePicker, restoreFullscreen, isInElectron: isInElectron() };
 }

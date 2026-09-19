@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getSyncStats, syncNow, type SyncStats } from '@/src/lib/syncClient';
-import { getUnsyncedCount, isTauriApp } from '@/src/lib/offlineStorage';
-import { RefreshCw, Check, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { RefreshCw, Check, AlertTriangle } from 'lucide-react';
 
 interface SyncIndicatorProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
@@ -12,59 +10,55 @@ interface SyncIndicatorProps {
 
 export default function SyncIndicator({
   position = 'bottom-right',
-  showDetails = false
+  showDetails = false,
 }: SyncIndicatorProps) {
-  const [stats, setStats] = useState<SyncStats | null>(null);
-  const [unsyncedCount, setUnsyncedCount] = useState(0);
-  const [isOnline, setIsOnline] = useState(true);
-  const [showInTauri, setShowInTauri] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isElectron, setIsElectron] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    setShowInTauri(isTauriApp());
+    // Only render inside Electron — window.isElectron is set by preload.js
+    const inElectron = typeof window !== 'undefined' &&
+      (window as any).isElectron === true;
+    setIsElectron(inElectron);
+    if (!inElectron) return;
 
-    if (!isTauriApp()) return;
-
-    const updateStats = async () => {
-      const syncStats = await getSyncStats();
-      setStats(syncStats);
-
-      const count = await getUnsyncedCount();
-      setUnsyncedCount(count);
+    const updateStatus = async () => {
+      try {
+        const status = await (window as any).electronAPI?.syncGetStatus?.();
+        if (status) {
+          setPendingCount(status.pendingCount ?? 0);
+          setIsSyncing(status.isSyncing ?? false);
+        }
+      } catch {
+        // Sync IPC not available — silent fail
+      }
     };
 
-    updateStats();
-    const interval = setInterval(updateStats, 10000);
+    updateStatus();
+    const interval = setInterval(updateStatus, 10000);
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    // Listen for sync status changes pushed from main process
+    (window as any).electronAPI?.onSyncStatusChanged?.((data: any) => {
+      setPendingCount(data?.pendingCount ?? 0);
+      setIsSyncing(data?.isSyncing ?? false);
+    });
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    setIsOnline(navigator.onLine);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    return () => clearInterval(interval);
   }, []);
 
-  const handleQuickSync = async () => {
-    if (stats?.is_syncing || unsyncedCount === 0) return;
+  // Only render inside Electron
+  if (!isElectron) return null;
 
+  const handleForceSync = async () => {
+    if (isSyncing || pendingCount === 0) return;
+    setIsSyncing(true);
     try {
-      await syncNow();
-      const updated = await getSyncStats();
-      setStats(updated);
-      const count = await getUnsyncedCount();
-      setUnsyncedCount(count);
-    } catch (error) {
-      console.error('Quick sync failed:', error);
-    }
+      await (window as any).electronAPI?.syncForceNow?.();
+    } catch { /* silent */ }
+    setTimeout(() => setIsSyncing(false), 2000);
   };
-
-  if (!showInTauri || !stats) return null;
 
   const positionClasses = {
     'bottom-right': 'bottom-4 right-4',
@@ -73,81 +67,55 @@ export default function SyncIndicator({
     'top-left': 'top-4 left-4',
   };
 
-  const getStatusColor = () => {
-    if (stats.is_syncing) return 'bg-yellow-500';
-    if (unsyncedCount > 0) return 'bg-blue-500';
-    if ((stats.total_failed || 0) > 0) return 'bg-red-500';
-    return 'bg-green-500';
-  };
+  const badgeColor = isSyncing
+    ? 'bg-yellow-500'
+    : pendingCount > 0
+      ? 'bg-blue-500'
+      : 'bg-green-500';
 
-  const getStatusIcon = () => {
-    if (stats.is_syncing) {
-      return <RefreshCw className="w-4 h-4 text-white animate-spin" />;
-    }
-    if (unsyncedCount > 0) {
-      return <RefreshCw className="w-4 h-4 text-white" />;
-    }
-    if (stats.total_failed && stats.total_failed > 0) {
-      return <AlertTriangle className="w-4 h-4 text-white" />;
-    }
-    return <Check className="w-4 h-4 text-white" />;
-  };
+  const BadgeIcon = isSyncing
+    ? () => <RefreshCw className="w-4 h-4 text-white animate-spin" />
+    : pendingCount > 0
+      ? () => <AlertTriangle className="w-4 h-4 text-white" />
+      : () => <Check className="w-4 h-4 text-white" />;
 
   return (
     <div className={`fixed ${positionClasses[position]} z-50`}>
-      {/* Compact Indicator */}
       <div
         onClick={() => setExpanded(!expanded)}
-        className={`${getStatusColor()} rounded-full p-3 shadow-lg cursor-pointer hover:scale-110 transition-all`}
-        title={`${unsyncedCount} items pending sync`}
+        className={`${badgeColor} rounded-full p-3 shadow-lg cursor-pointer 
+                    hover:scale-110 transition-all`}
+        title={pendingCount > 0 ? `${pendingCount} items pending sync` : 'All synced'}
       >
         <div className="relative">
-          {getStatusIcon()}
-          {unsyncedCount > 0 && !stats.is_syncing && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-              {unsyncedCount > 9 ? '9+' : unsyncedCount}
+          <BadgeIcon />
+          {pendingCount > 0 && !isSyncing && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs 
+                             rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              {pendingCount > 9 ? '9+' : pendingCount}
             </span>
           )}
         </div>
       </div>
 
-      {/* Expanded Details */}
-      {expanded && (showDetails || unsyncedCount > 0) && (
-        <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl p-4 w-64 border-2 border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold">Sync Status</span>
-            {isOnline ? (
-              <Wifi className="w-4 h-4 text-green-600" />
-            ) : (
-              <WifiOff className="w-4 h-4 text-red-600" />
-            )}
-          </div>
-
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Pending:</span>
-              <span className="font-semibold">{unsyncedCount}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Synced:</span>
-              <span className="font-semibold text-green-600">{stats.total_synced}</span>
-            </div>
-            {stats.total_failed && stats.total_failed > 0 && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Failed:</span>
-                <span className="font-semibold text-red-600">{stats.total_failed}</span>
-              </div>
-            )}
-          </div>
-
-          {unsyncedCount > 0 && isOnline && (
+      {expanded && (
+        <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl 
+                        p-4 w-56 border-2 border-gray-200">
+          <p className="font-semibold mb-2 text-sm">Sync Status</p>
+          <p className="text-sm text-gray-600">
+            {isSyncing ? 'Syncing...' : pendingCount > 0
+              ? `${pendingCount} items pending`
+              : 'All data synced'}
+          </p>
+          {pendingCount > 0 && !isSyncing && (
             <button
-              onClick={handleQuickSync}
-              disabled={stats.is_syncing}
-              className="w-full mt-3 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              onClick={handleForceSync}
+              className="w-full mt-3 py-2 bg-blue-600 text-white rounded text-sm 
+                         font-semibold hover:bg-blue-700 flex items-center 
+                         justify-center gap-2"
             >
-              <RefreshCw className={`w-4 h-4 ${stats.is_syncing ? 'animate-spin' : ''}`} />
-              {stats.is_syncing ? 'Syncing...' : 'Sync Now'}
+              <RefreshCw className="w-4 h-4" />
+              Sync Now
             </button>
           )}
         </div>
