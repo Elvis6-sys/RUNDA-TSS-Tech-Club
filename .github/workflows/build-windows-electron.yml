@@ -117,9 +117,10 @@ jobs:
           "@ | Out-File -FilePath .env -Encoding utf8
           Write-Host "✅ Placeholder .env created"
           
-          Write-Host "Creating empty database..."
+          Write-Host "Creating and seeding database..."
           npx prisma db push --skip-generate
-          Write-Host "✅ Empty database created"
+          npx prisma db seed
+          Write-Host "✅ Database created and seeded with default users"
 
       - name: 🎯 Build Windows Installer and Portable
         run: npm run electron:build:win
