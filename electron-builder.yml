@@ -141,7 +141,6 @@ win:
       arch:
         - x64
   icon: build/icon.ico
-  artifactName: "${productName}-${version}-${target}.exe"
 
 nsis:
   oneClick: false
@@ -154,6 +153,10 @@ nsis:
   shortcutName: "RUNDA TSS Exam System"
   warningsAsErrors: false
   perMachine: false
+  artifactName: "${productName} Setup-${version}.exe"
+
+portable:
+  artifactName: "${productName} Portable-${version}.exe"
 
 # Disable all code signing and online checks
 electronUpdaterCompatibility: ">=2.16"
