@@ -13,17 +13,21 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  // Load theme from localStorage on mount
+  // Load theme from localStorage on mount (client-side only)
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light';
-    setTheme(savedTheme);
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light';
+      setTheme(savedTheme);
+    }
   }, []);
 
-  // Toggle theme and save to localStorage
+  // Toggle theme and save to localStorage (client-side only)
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', newTheme);
+    }
   };
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -46,8 +50,10 @@ export default function LoginPage() {
         return;
       }
 
-      // Store token in localStorage for browser-side access
-      localStorage.setItem('auth-token', data.token);
+      // Store token in localStorage for browser-side access (client-side only)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth-token', data.token);
+      }
 
       // Log success
       console.log('✅ Login successful, redirecting to dashboard...');
